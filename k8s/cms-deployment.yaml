@@ -1,0 +1,49 @@
+---
+kind: Deployment
+apiVersion: extensions/v1beta1
+metadata:
+  name: cloudcms
+  labels:
+    app: cloudcms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudcms
+  template:
+    metadata:
+      labels:
+        app: cloudcms
+    spec:
+      imagePullSecrets:
+      - name: regcred
+      containers:
+      - name: cloudcms
+        image: reg.urantiatech.com/cloudcms/cloudcms
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+        - mountPath: "/database"
+          name: nfs-cloudcms
+        - mountPath: "/etc/ssl/certs"
+          name: certs
+          readOnly: true
+      volumes:
+      - name: nfs-cloudcms
+        persistentVolumeClaim:
+          claimName: nfs-cloudcms
+      - name: certs
+        hostPath:
+          path: "/etc/ssl/certs"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cloudcms
+spec:
+  ports:
+  - name: backend
+    targetPort: 8080
+    port: 80
+  selector:
+    app: cloudcms
