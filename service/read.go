@@ -13,13 +13,24 @@ import (
 // Read - creates a single item
 func (Service) Read(ctx context.Context, req *api.Read) (*api.Response, error) {
 	var resp api.Response
+	var err error
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = "Invalid content type"
 		return &resp, nil
 	}
 
-	err := DB.View(func(tx *bolt.Tx) error {
+	// Open database in read-only mode
+	// It will be created if it doesn't exist.
+	options := bolt.Options{ReadOnly: true}
+	DB, err = bolt.Open(dbFile, 0644, &options)
+	if err != nil {
+		resp.Err = ErrorNotFound.Error()
+		return &resp, nil
+	}
+	defer DB.Close()
+
+	err = DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Type))
 		if b == nil {
 			return ErrorNotFound

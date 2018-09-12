@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,13 +16,23 @@ import (
 // Create - creates a single item
 func (Service) Create(ctx context.Context, req *api.Create) (*api.Response, error) {
 	var resp api.Response
+	var err error
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = "Invalid content type"
 		return &resp, nil
 	}
 
-	err := DB.Update(func(tx *bolt.Tx) error {
+	// Open database in read-write mode
+	// It will be created if it doesn't exist.
+	//options := bolt.Options{ReadOnly: false}
+	DB, err = bolt.Open(dbFile, 0644, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer DB.Close()
+
+	err = DB.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(req.Type))
 		if err != nil {
 			return err

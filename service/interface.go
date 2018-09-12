@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -20,8 +19,8 @@ var DB *bolt.DB
 // DefaultBucket name
 const DefaultBucket = "default"
 
-// indexDir - Directory to store index files
-var indexDir string
+var workDir string
+var dbFile string
 
 // Index Map
 var Index map[string]bleve.Index
@@ -36,33 +35,46 @@ type Interface interface {
 	Ping(context.Context, *api.Ping) (*api.Pong, error)
 }
 
-// InitIndexMap initializes the map for storing indexes for content types
-func InitIndexMap(dir string) error {
-	indexDir = dir
+// Initialize function
+func Initialize(file, dir string) error {
+	var err error
+	dbFile = file
+
+	workDir = dir
 	Index = make(map[string]bleve.Index)
-	if err := os.MkdirAll(dir, os.ModeDir); err != nil {
+	if err := os.MkdirAll(workDir, os.ModeDir|0755); err != nil {
 		return err
 	}
 
+	// Create databse if it doesn't exist.
+	DB, err = bolt.Open(workDir+"/"+dbFile, 0644, nil)
+	if err != nil {
+		return err
+	}
+	defer DB.Close()
+
 	// Initialize index for all content types here
-	createIndexIfNotPresent("example")
+	if err := createIndexIfNotPresent("example"); err != nil {
+		return err
+	}
 	return nil
 }
 
-func createIndexIfNotPresent(contentType string) {
+func createIndexIfNotPresent(contentType string) error {
 	var err error
 	if Index[contentType] != nil {
-		return
+		return nil
 	}
 	// Initialze the index file
-	Index[contentType], err = bleve.Open(indexDir + "/" + contentType + ".index")
+	Index[contentType], err = bleve.Open(workDir + "/" + contentType + ".index")
 	if err != nil {
 		mapping := bleve.NewIndexMapping()
-		Index[contentType], err = bleve.New(indexDir+"/"+contentType+".index", mapping)
+		Index[contentType], err = bleve.New(workDir+"/"+contentType+".index", mapping)
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
+	return nil
 }
 
 // Service struct for accessing services

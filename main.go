@@ -9,19 +9,16 @@ import (
 	"strconv"
 
 	s "git.urantiatech.com/cloudcms/cloudcms/service"
-	"github.com/boltdb/bolt"
 	h "github.com/urantiatech/kit/transport/http"
 )
 
 func main() {
 	// Parse command line parameters
 	var port int
-	var masterPath, workerPath, cloudsyncDNS string
+	var dbFile, workDir string
 	flag.IntVar(&port, "port", 8080, "Port")
-	flag.StringVar(&masterPath, "masterPath", "master", "The path for Master process")
-	flag.StringVar(&workerPath, "workerPath", "worker", "The path for Worker process")
-	flag.StringVar(&cloudsyncDNS, "cloudsyncDNS", "cloudsync.default.svc.cluster.local",
-		"The dns for CloudSync service")
+	flag.StringVar(&dbFile, "dbFile", "cloudcms.db", "The database file path")
+	flag.StringVar(&workDir, "workDir", ".", "The directory for storing db and index files")
 	flag.Parse()
 
 	log.SetFlags(log.Lshortfile)
@@ -33,16 +30,7 @@ func main() {
 		}
 	}
 
-	// Open the data file in your current directory.
-	// It will be created if it doesn't exist.
-	var err error
-	s.DB, err = bolt.Open(masterPath+"/cloudcms.db", 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer s.DB.Close()
-
-	if err := s.InitIndexMap(masterPath); err != nil {
+	if err := s.Initialize(dbFile, workDir); err != nil {
 		log.Fatal(err)
 	}
 
