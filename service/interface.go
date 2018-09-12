@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"os"
 	"strings"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
@@ -19,7 +18,6 @@ var DB *bolt.DB
 // DefaultBucket name
 const DefaultBucket = "default"
 
-var workDir string
 var dbFile string
 
 // Index Map
@@ -36,18 +34,14 @@ type Interface interface {
 }
 
 // Initialize function
-func Initialize(file, dir string) error {
+func Initialize(file string) error {
 	var err error
-	dbFile = file
 
-	workDir = dir
+	dbFile = file
 	Index = make(map[string]bleve.Index)
-	if err := os.MkdirAll(workDir, os.ModeDir|0755); err != nil {
-		return err
-	}
 
 	// Create databse if it doesn't exist.
-	DB, err = bolt.Open(workDir+"/"+dbFile, 0644, nil)
+	DB, err = bolt.Open(dbFile, 0644, nil)
 	if err != nil {
 		return err
 	}
@@ -66,13 +60,10 @@ func createIndexIfNotPresent(contentType string) error {
 		return nil
 	}
 	// Initialze the index file
-	Index[contentType], err = bleve.Open(workDir + "/" + contentType + ".index")
+	mapping := bleve.NewIndexMapping()
+	Index[contentType], err = bleve.NewMemOnly(mapping)
 	if err != nil {
-		mapping := bleve.NewIndexMapping()
-		Index[contentType], err = bleve.New(workDir+"/"+contentType+".index", mapping)
-		if err != nil {
-			return err
-		}
+		return err
 	}
 	return nil
 }

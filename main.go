@@ -15,10 +15,9 @@ import (
 func main() {
 	// Parse command line parameters
 	var port int
-	var dbFile, workDir string
+	var dbFile string
 	flag.IntVar(&port, "port", 8080, "Port")
-	flag.StringVar(&dbFile, "dbFile", "cloudcms.db", "The database file path")
-	flag.StringVar(&workDir, "workDir", ".", "The directory for storing db and index files")
+	flag.StringVar(&dbFile, "dbFile", "cloudcms.db", "The database filename")
 	flag.Parse()
 
 	log.SetFlags(log.Lshortfile)
@@ -30,9 +29,10 @@ func main() {
 		}
 	}
 
-	if err := s.Initialize(dbFile, workDir); err != nil {
+	if err := s.Initialize(dbFile); err != nil {
 		log.Fatal(err)
 	}
+	log.Println("Initialization done")
 
 	var svc s.Service
 	svc = s.Service{}
