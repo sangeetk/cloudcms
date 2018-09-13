@@ -32,7 +32,6 @@ func main() {
 	if err := s.Initialize(dbFile); err != nil {
 		log.Fatal(err)
 	}
-	log.Println("Initialization done")
 
 	var svc s.Service
 	svc = s.Service{}
