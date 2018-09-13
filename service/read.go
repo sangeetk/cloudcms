@@ -12,8 +12,8 @@ import (
 )
 
 // Read - returns a single item
-func (s *Service) Read(ctx context.Context, req *api.Read) (*api.Response, error) {
-	var resp api.Response
+func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response, error) {
+	var resp = api.Response{Type: req.Type}
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = "Invalid content type"
@@ -46,7 +46,8 @@ func (s *Service) Read(ctx context.Context, req *api.Read) (*api.Response, error
 		if val == nil {
 			return ErrorNotFound
 		}
-		err := json.Unmarshal(val, &resp.Item)
+
+		err := json.Unmarshal(val, &resp.Content)
 		if err != nil {
 			return err
 		}
@@ -60,8 +61,8 @@ func (s *Service) Read(ctx context.Context, req *api.Read) (*api.Response, error
 }
 
 // ReadFromIndex - returns a single item from index
-func (s *Service) ReadFromIndex(ctx context.Context, req *api.Read) (*api.Response, error) {
-	var resp api.Response
+func (s *Service) ReadFromIndex(ctx context.Context, req *api.ReadRequest) (*api.Response, error) {
+	var resp = api.Response{Type: req.Type}
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = "Invalid content type"
@@ -85,16 +86,7 @@ func (s *Service) ReadFromIndex(ctx context.Context, req *api.Read) (*api.Respon
 		for _, hit := range searchResult.Hits {
 			slug := hit.Fields["slug"].(string)
 			if slug == req.Slug {
-				resp.Item = api.Item{
-					Header: api.Header{
-						ID:        uint64(hit.Fields["id"].(float64)),
-						Title:     hit.Fields["title"].(string),
-						Slug:      slug,
-						Status:    hit.Fields["status"].(string),
-						CreatedAt: int64(hit.Fields["created_at"].(float64)),
-						UpdatedAt: int64(hit.Fields["updated_at"].(float64)),
-					},
-				}
+				resp.Content = hit.Fields
 				return &resp, nil
 			}
 		}
@@ -112,14 +104,14 @@ func (s *Service) ReadFromIndex(ctx context.Context, req *api.Read) (*api.Respon
 // ReadEndpoint - creates endpoint for Read service
 func ReadEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(api.Read)
+		req := request.(api.ReadRequest)
 		return svc.Read(ctx, &req)
 	}
 }
 
 // DecodeReadReq - decodes the incoming request
 func DecodeReadReq(ctx context.Context, r *http.Request) (interface{}, error) {
-	var request api.Read
+	var request api.ReadRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}

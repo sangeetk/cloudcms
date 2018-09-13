@@ -25,11 +25,11 @@ var Index map[string]bleve.Index
 
 // Interface definition
 type Interface interface {
-	Create(context.Context, *api.Create) (*api.Response, error)
-	Read(context.Context, *api.Read) (*api.Response, error)
-	Update(context.Context, *api.Update) (*api.Response, error)
-	Delete(context.Context, *api.Delete) (*api.Response, error)
-	Search(context.Context, *api.Search) (*api.SearchResults, error)
+	Create(context.Context, *api.CreateRequest) (*api.Response, error)
+	Read(context.Context, *api.ReadRequest) (*api.Response, error)
+	Update(context.Context, *api.UpdateRequest) (*api.Response, error)
+	Delete(context.Context, *api.DeleteRequest) (*api.Response, error)
+	Search(context.Context, *api.SearchRequest) (*api.SearchResults, error)
 	Ping(context.Context, *api.Ping) (*api.Pong, error)
 }
 

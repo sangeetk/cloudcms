@@ -4,62 +4,41 @@ import (
 	"time"
 )
 
-// Header contains some common header fields for content type
-type Header struct {
-	ID        uint64 `json:"id"`
-	Title     string `json:"title"`
-	Slug      string `json:"slug"`
-	Status    string `json:"status"`
-	CreatedAt int64  `json:"created_at"`
-	UpdatedAt int64  `json:"updated_at"`
-	DeletedAt int64  `json:"deleted_at"`
-}
-
-// Item content type
-type Item struct {
-	Header
-	Content interface{} `json:"content"`
-}
-
-// Create - creates a new item
-type Create struct {
+// CreateRequest structure
+type CreateRequest struct {
 	Type    string      `json:"type"`
-	Title   string      `json:"title"`
-	Status  string      `json:"status"`
 	Content interface{} `json:"content"`
 }
 
-// Read - retreives the item from db
-type Read struct {
-	Type string `json:"type"`
-	Slug string `json:"slug"`
-}
-
-// Update - updates the item
-type Update struct {
+// UpdateRequest structure
+type UpdateRequest struct {
 	Type    string      `json:"type"`
 	Slug    string      `json:"slug"`
-	Title   string      `json:"title"`
-	Status  string      `json:"status"`
 	Content interface{} `json:"content"`
 }
 
-// Delete - deletes the item
-type Delete struct {
+// DeleteRequest structure
+type DeleteRequest struct {
 	Type string `json:"type"`
 	Slug string `json:"slug"`
 }
 
-// Response - response for CRUD requests
-type Response struct {
-	Item
-	Err string `json:"err,omitempty"`
+// ReadRequest structure
+type ReadRequest struct {
+	Type string `json:"type"`
+	Slug string `json:"slug"`
 }
 
-// Search - search
-type Search struct {
+// Response structure
+type Response struct {
+	Type    string      `json:"type"`
+	Content interface{} `json:"content"`
+	Err     string      `json:"err"`
+}
+
+// SearchRequest - search request
+type SearchRequest struct {
 	Type      string    `json:"type"`
-	Status    string    `json:"status"`
 	Query     string    `json:"query"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
@@ -69,11 +48,12 @@ type Search struct {
 
 // SearchResults - search results
 type SearchResults struct {
-	Results []Item `json:"results"`
-	Total   int    `json:"total"`
-	Limit   int    `json:"limit"`
-	Skip    int    `json:"skip"`
-	Err     string `json:"err,omitempty"`
+	Type    string        `json:"type"`
+	Results []interface{} `json:"results"`
+	Total   int           `json:"total"`
+	Limit   int           `json:"limit"`
+	Skip    int           `json:"skip"`
+	Err     string        `json:"err,omitempty"`
 }
 
 // Ping request

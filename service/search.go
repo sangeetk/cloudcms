@@ -12,8 +12,8 @@ import (
 )
 
 // Search - creates a single item
-func (Service) Search(ctx context.Context, req *api.Search) (*api.SearchResults, error) {
-	var resp api.SearchResults
+func (Service) Search(ctx context.Context, req *api.SearchRequest) (*api.SearchResults, error) {
+	var resp = api.SearchResults{Type: req.Type}
 	var searchRequest *bleve.SearchRequest
 
 	if _, ok := Index[req.Type]; !ok {
@@ -54,17 +54,7 @@ func (Service) Search(ctx context.Context, req *api.Search) (*api.SearchResults,
 	resp.Skip = req.Skip
 
 	for _, hit := range searchResult.Hits {
-		item := api.Item{
-			Header: api.Header{
-				ID:        uint64(hit.Fields["id"].(float64)),
-				Title:     hit.Fields["title"].(string),
-				Slug:      hit.Fields["slug"].(string),
-				Status:    hit.Fields["status"].(string),
-				CreatedAt: int64(hit.Fields["created_at"].(float64)),
-				UpdatedAt: int64(hit.Fields["updated_at"].(float64)),
-			},
-		}
-		resp.Results = append(resp.Results, item)
+		resp.Results = append(resp.Results, hit.Fields)
 	}
 
 	return &resp, nil
@@ -73,14 +63,14 @@ func (Service) Search(ctx context.Context, req *api.Search) (*api.SearchResults,
 // SearchEndpoint - creates endpoint for Search service
 func SearchEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(api.Search)
+		req := request.(api.SearchRequest)
 		return svc.Search(ctx, &req)
 	}
 }
 
 // DecodeSearchReq - decodes the incoming request
 func DecodeSearchReq(ctx context.Context, r *http.Request) (interface{}, error) {
-	var request api.Search
+	var request api.SearchRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}

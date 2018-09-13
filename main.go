@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	s "git.urantiatech.com/cloudcms/cloudcms/service"
+	"github.com/gorilla/mux"
 	h "github.com/urantiatech/kit/transport/http"
 )
 
@@ -36,12 +37,14 @@ func main() {
 	var svc s.Service
 	svc = s.Service{}
 
-	http.Handle("/create", h.NewServer(s.CreateEndpoint(svc), s.DecodeCreateReq, s.Encode))
-	http.Handle("/read", h.NewServer(s.ReadEndpoint(svc), s.DecodeReadReq, s.Encode))
-	http.Handle("/update", h.NewServer(s.UpdateEndpoint(svc), s.DecodeUpdateReq, s.Encode))
-	http.Handle("/delete", h.NewServer(s.DeleteEndpoint(svc), s.DecodeDeleteReq, s.Encode))
-	http.Handle("/search", h.NewServer(s.SearchEndpoint(svc), s.DecodeSearchReq, s.Encode))
-	http.Handle("/ping", h.NewServer(s.PingEndpoint(svc), s.DecodePingReq, s.Encode))
+	r := mux.NewRouter()
 
-	http.ListenAndServe(fmt.Sprintf(":%d", port), nil)
+	r.Handle("/create", h.NewServer(s.CreateEndpoint(svc), s.DecodeCreateReq, s.Encode))
+	r.Handle("/read", h.NewServer(s.ReadEndpoint(svc), s.DecodeReadReq, s.Encode))
+	r.Handle("/update", h.NewServer(s.UpdateEndpoint(svc), s.DecodeUpdateReq, s.Encode))
+	r.Handle("/delete", h.NewServer(s.DeleteEndpoint(svc), s.DecodeDeleteReq, s.Encode))
+	r.Handle("/search", h.NewServer(s.SearchEndpoint(svc), s.DecodeSearchReq, s.Encode))
+	r.Handle("/ping", h.NewServer(s.PingEndpoint(svc), s.DecodePingReq, s.Encode))
+
+	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }

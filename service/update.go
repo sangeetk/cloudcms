@@ -13,8 +13,8 @@ import (
 )
 
 // Update - creates a single item
-func (Service) Update(ctx context.Context, req *api.Update) (*api.Response, error) {
-	var resp api.Response
+func (Service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Response, error) {
+	var resp = api.Response{Type: req.Type}
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
@@ -37,34 +37,38 @@ func (Service) Update(ctx context.Context, req *api.Update) (*api.Response, erro
 			return ErrorNotFound
 		}
 
+		var content map[string]interface{}
 		// Get the existing value
 		val := b.Get([]byte(req.Slug))
 		if val == nil {
 			return ErrorNotFound
 		}
-		err := json.Unmarshal(val, &resp.Item)
+		err := json.Unmarshal(val, &content)
 		if err != nil {
 			return err
 		}
 
 		// Update values
-		resp.Item.Title = req.Title
-		resp.Item.Status = req.Status
-		resp.Item.Content = req.Content
-		resp.Item.UpdatedAt = time.Now().Unix()
+		var fields = (req.Content).(map[string]interface{})
+		for k, v := range fields {
+			content[k] = v
+		}
+		content["updated_at"] = time.Now().Unix()
 
 		// Commit to database
-		itm, err := json.Marshal(resp.Item)
+		j, err := json.Marshal(content)
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(resp.Item.Slug), itm)
+		err = b.Put([]byte(req.Slug), j)
 		if err != nil {
 			return err
 		}
 
+		resp.Content = content
+
 		// Update index
-		err = Index[req.Type].Index(resp.Item.Slug, resp.Item)
+		err = Index[req.Type].Index(req.Slug, content)
 		if err != nil {
 			return err
 		}
@@ -80,14 +84,14 @@ func (Service) Update(ctx context.Context, req *api.Update) (*api.Response, erro
 // UpdateEndpoint - creates endpoint for Update service
 func UpdateEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(api.Update)
+		req := request.(api.UpdateRequest)
 		return svc.Update(ctx, &req)
 	}
 }
 
 // DecodeUpdateReq - decodes the incoming request
 func DecodeUpdateReq(ctx context.Context, r *http.Request) (interface{}, error) {
-	var request api.Update
+	var request api.UpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}

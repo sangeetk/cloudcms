@@ -14,8 +14,8 @@ import (
 )
 
 // Create - creates a single item
-func (Service) Create(ctx context.Context, req *api.Create) (*api.Response, error) {
-	var resp api.Response
+func (Service) Create(ctx context.Context, req *api.CreateRequest) (*api.Response, error) {
+	var resp = api.Response{Type: req.Type}
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
@@ -43,42 +43,38 @@ func (Service) Create(ctx context.Context, req *api.Create) (*api.Response, erro
 			return err
 		}
 
-		item := api.Item{
-			Header: api.Header{
-				ID:        nextSeq,
-				Title:     req.Title,
-				Slug:      stringToSlug(req.Title),
-				Status:    req.Status,
-				CreatedAt: time.Now().Unix(),
-				UpdatedAt: time.Now().Unix(),
-				DeletedAt: 0,
-			},
-			// Custom content type fields
-			Content: req.Content,
-		}
+		var item = (req.Content).(map[string]interface{})
+		item["id"] = nextSeq
+		title := item["title"].(string)
+		slug := stringToSlug(title)
+		item["slug"] = slug
+		item["created_at"] = time.Now().Unix()
+		item["updated_at"] = time.Now().Unix()
+		item["deleted_at"] = 0
 
-		slug := item.Slug
+		newSlug := slug
 		var i int
 		// Find a unique slug
-		for i = 2; b.Get([]byte(slug)) != nil; i++ {
-			slug = fmt.Sprintf("%s-%d", item.Slug, i)
+		for i = 2; b.Get([]byte(newSlug)) != nil; i++ {
+			newSlug = fmt.Sprintf("%s-%d", slug, i)
 		}
 		if i > 2 {
-			item.Slug = slug
+			item["slug"] = newSlug
 		}
 
-		itm, err := json.Marshal(item)
+		j, err := json.Marshal(item)
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(item.Slug), itm)
+		err = b.Put([]byte(newSlug), j)
 		if err != nil {
 			return err
 		}
-		resp.Item = item
+
+		resp.Content = item
 
 		// Create index
-		err = Index[req.Type].Index(resp.Item.Slug, resp.Item)
+		err = Index[req.Type].Index(newSlug, item)
 		if err != nil {
 			return err
 		}
@@ -94,14 +90,14 @@ func (Service) Create(ctx context.Context, req *api.Create) (*api.Response, erro
 // CreateEndpoint - creates endpoint for Create service
 func CreateEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(api.Create)
+		req := request.(api.CreateRequest)
 		return svc.Create(ctx, &req)
 	}
 }
 
 // DecodeCreateReq - decodes the incoming request
 func DecodeCreateReq(ctx context.Context, r *http.Request) (interface{}, error) {
-	var request api.Create
+	var request api.CreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}

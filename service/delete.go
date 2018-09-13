@@ -12,8 +12,8 @@ import (
 )
 
 // Delete - creates a single item
-func (Service) Delete(ctx context.Context, req *api.Delete) (*api.Response, error) {
-	var resp api.Response
+func (Service) Delete(ctx context.Context, req *api.DeleteRequest) (*api.Response, error) {
+	var resp = api.Response{Type: req.Type}
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
@@ -41,18 +41,19 @@ func (Service) Delete(ctx context.Context, req *api.Delete) (*api.Response, erro
 		if val == nil {
 			return ErrorNotFound
 		}
-		err := json.Unmarshal(val, &resp.Item)
+
+		err := json.Unmarshal(val, &resp.Content)
 		if err != nil {
 			return err
 		}
 
-		err = b.Delete([]byte(resp.Item.Slug))
+		err = b.Delete([]byte(req.Slug))
 		if err != nil {
 			return err
 		}
 
 		// Delete index
-		err = Index[req.Type].Delete(resp.Item.Slug)
+		err = Index[req.Type].Delete(req.Slug)
 		if err != nil {
 			return err
 		}
@@ -68,14 +69,14 @@ func (Service) Delete(ctx context.Context, req *api.Delete) (*api.Response, erro
 // DeleteEndpoint - creates endpoint for Delete service
 func DeleteEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(api.Delete)
+		req := request.(api.DeleteRequest)
 		return svc.Delete(ctx, &req)
 	}
 }
 
 // DecodeDeleteReq - decodes the incoming request
 func DecodeDeleteReq(ctx context.Context, r *http.Request) (interface{}, error) {
-	var request api.Delete
+	var request api.DeleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}
