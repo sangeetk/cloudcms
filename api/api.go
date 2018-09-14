@@ -55,14 +55,3 @@ type SearchResults struct {
 	Skip    int           `json:"skip"`
 	Err     string        `json:"err,omitempty"`
 }
-
-// Ping request
-type Ping struct {
-	Timestamp time.Time `json:"timestamp"`
-}
-
-// Pong response
-type Pong struct {
-	Timestamp1 time.Time `json:"timestamp1"`
-	Timestamp2 time.Time `json:"timestamp2"`
-}

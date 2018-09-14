@@ -12,12 +12,32 @@ import (
 )
 
 // Delete - creates a single item
-func (Service) Delete(ctx context.Context, req *api.DeleteRequest) (*api.Response, error) {
+func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool) (*api.Response, error) {
 	var resp = api.Response{Type: req.Type}
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = ErrorNotFound.Error()
+		return &resp, nil
+	}
+
+	// Update request as sync msg contains full information
+	// Simply index the content and return
+	if sync {
+		IndexLock.Lock()
+		defer IndexLock.Unlock()
+
+		readReq := api.ReadRequest{Type: req.Type, Slug: req.Slug}
+		item, err := s.Read(ctx, &readReq)
+		if err != nil {
+			resp.Err = ErrorNotFound.Error()
+			return &resp, nil
+		}
+		err = Index[req.Type].Delete(req.Slug)
+		if err != nil {
+			return &resp, nil
+		}
+		resp.Content = item.Content
 		return &resp, nil
 	}
 
@@ -53,6 +73,9 @@ func (Service) Delete(ctx context.Context, req *api.DeleteRequest) (*api.Respons
 		}
 
 		// Delete index
+		IndexLock.Lock()
+		defer IndexLock.Unlock()
+
 		err = Index[req.Type].Delete(req.Slug)
 		if err != nil {
 			return err
@@ -63,6 +86,8 @@ func (Service) Delete(ctx context.Context, req *api.DeleteRequest) (*api.Respons
 		resp.Err = err.Error()
 	}
 
+	// Sync others
+
 	return &resp, nil
 }
 
@@ -70,7 +95,7 @@ func (Service) Delete(ctx context.Context, req *api.DeleteRequest) (*api.Respons
 func DeleteEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.DeleteRequest)
-		return svc.Delete(ctx, &req)
+		return svc.Delete(ctx, &req, false)
 	}
 }
 

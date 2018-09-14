@@ -13,7 +13,7 @@ import (
 )
 
 // Update - creates a single item
-func (Service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Response, error) {
+func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool) (*api.Response, error) {
 	var resp = api.Response{Type: req.Type}
 	var err error
 
@@ -22,9 +22,22 @@ func (Service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Respons
 		return &resp, nil
 	}
 
+	// Update request as sync msg contains full information
+	// Simply update the index the content and return
+	if sync {
+		IndexLock.Lock()
+		defer IndexLock.Unlock()
+
+		err = Index[req.Type].Index(req.Slug, req.Content)
+		if err != nil {
+			return &resp, nil
+		}
+		resp.Content = req.Content
+		return &resp, nil
+	}
+
+	// Normal update request
 	// Open database in read-write mode
-	// It will be created if it doesn't exist.
-	//options := bolt.Options{ReadOnly: false}
 	DB, err = bolt.Open(dbFile, 0644, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -68,6 +81,9 @@ func (Service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Respons
 		resp.Content = content
 
 		// Update index
+		IndexLock.Lock()
+		defer IndexLock.Unlock()
+
 		err = Index[req.Type].Index(req.Slug, content)
 		if err != nil {
 			return err
@@ -78,6 +94,8 @@ func (Service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Respons
 		resp.Err = err.Error()
 	}
 
+	// Sync others
+
 	return &resp, nil
 }
 
@@ -85,7 +103,7 @@ func (Service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Respons
 func UpdateEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.UpdateRequest)
-		return svc.Update(ctx, &req)
+		return svc.Update(ctx, &req, false)
 	}
 }
 

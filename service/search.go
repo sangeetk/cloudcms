@@ -12,7 +12,7 @@ import (
 )
 
 // Search - creates a single item
-func (Service) Search(ctx context.Context, req *api.SearchRequest) (*api.SearchResults, error) {
+func (s *Service) Search(ctx context.Context, req *api.SearchRequest) (*api.SearchResults, error) {
 	var resp = api.SearchResults{Type: req.Type}
 	var searchRequest *bleve.SearchRequest
 

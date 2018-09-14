@@ -14,7 +14,7 @@ import (
 )
 
 // Create - creates a single item
-func (Service) Create(ctx context.Context, req *api.CreateRequest) (*api.Response, error) {
+func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool) (*api.Response, error) {
 	var resp = api.Response{Type: req.Type}
 	var err error
 
@@ -24,9 +24,23 @@ func (Service) Create(ctx context.Context, req *api.CreateRequest) (*api.Respons
 		}
 	}
 
+	// Create request as sync msg contains full information
+	// Simply index the content and return
+	if sync {
+		IndexLock.Lock()
+		defer IndexLock.Unlock()
+
+		var item = (req.Content).(map[string]interface{})
+		err = Index[req.Type].Index(item["slug"].(string), item)
+		if err != nil {
+			return &resp, nil
+		}
+		resp.Content = req.Content
+		return &resp, nil
+	}
+
+	// Normal create request
 	// Open database in read-write mode
-	// It will be created if it doesn't exist.
-	//options := bolt.Options{ReadOnly: false}
 	DB, err = bolt.Open(dbFile, 0644, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -75,6 +89,9 @@ func (Service) Create(ctx context.Context, req *api.CreateRequest) (*api.Respons
 		resp.Content = item
 
 		// Create index
+		IndexLock.Lock()
+		defer IndexLock.Unlock()
+
 		err = Index[req.Type].Index(newSlug, item)
 		if err != nil {
 			return err
@@ -85,6 +102,8 @@ func (Service) Create(ctx context.Context, req *api.CreateRequest) (*api.Respons
 		resp.Err = err.Error()
 	}
 
+	// Sync others
+
 	return &resp, nil
 }
 
@@ -92,7 +111,7 @@ func (Service) Create(ctx context.Context, req *api.CreateRequest) (*api.Respons
 func CreateEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(api.CreateRequest)
-		return svc.Create(ctx, &req)
+		return svc.Create(ctx, &req, false)
 	}
 }
 

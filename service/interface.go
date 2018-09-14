@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"sync"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"github.com/blevesearch/bleve"
@@ -23,14 +24,20 @@ var dbFile string
 // Index Map
 var Index map[string]bleve.Index
 
+// IndexLock mutex
+var IndexLock sync.Mutex
+
 // Interface definition
 type Interface interface {
-	Create(context.Context, *api.CreateRequest) (*api.Response, error)
+	Create(context.Context, *api.CreateRequest, bool) (*api.Response, error)
 	Read(context.Context, *api.ReadRequest) (*api.Response, error)
-	Update(context.Context, *api.UpdateRequest) (*api.Response, error)
-	Delete(context.Context, *api.DeleteRequest) (*api.Response, error)
+	Update(context.Context, *api.UpdateRequest, bool) (*api.Response, error)
+	Delete(context.Context, *api.DeleteRequest, bool) (*api.Response, error)
 	Search(context.Context, *api.SearchRequest) (*api.SearchResults, error)
-	Ping(context.Context, *api.Ping) (*api.Pong, error)
+
+	// Only between peer-to-peer communication
+	Ping(context.Context, *PingRequest) (*PingResponse, error)
+	Sync(context.Context, *SyncRequest) (*SyncResponse, error)
 }
 
 // Initialize function
