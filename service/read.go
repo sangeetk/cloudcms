@@ -16,7 +16,7 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 	var resp = api.Response{Type: req.Type}
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = "Invalid content type"
+		resp.Err = ErrorNotFound.Error()
 		return &resp, nil
 	}
 

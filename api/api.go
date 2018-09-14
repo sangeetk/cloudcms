@@ -33,7 +33,7 @@ type ReadRequest struct {
 type Response struct {
 	Type    string      `json:"type"`
 	Content interface{} `json:"content"`
-	Err     string      `json:"err"`
+	Err     string      `json:"err,omitempty"`
 }
 
 // SearchRequest - search request

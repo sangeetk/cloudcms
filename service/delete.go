@@ -17,7 +17,7 @@ func (Service) Delete(ctx context.Context, req *api.DeleteRequest) (*api.Respons
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = "Invalid content type"
+		resp.Err = ErrorNotFound.Error()
 		return &resp, nil
 	}
 

@@ -19,8 +19,9 @@ func (Service) Create(ctx context.Context, req *api.CreateRequest) (*api.Respons
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = "Invalid content type"
-		return &resp, nil
+		if err := createIndex(req.Type); err != nil {
+			return &resp, nil
+		}
 	}
 
 	// Open database in read-write mode

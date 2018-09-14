@@ -18,7 +18,7 @@ func (Service) Update(ctx context.Context, req *api.UpdateRequest) (*api.Respons
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = "Invalid content type"
+		resp.Err = ErrorNotFound.Error()
 		return &resp, nil
 	}
 

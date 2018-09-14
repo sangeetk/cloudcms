@@ -46,15 +46,10 @@ func Initialize(file string) error {
 		return err
 	}
 	defer DB.Close()
-
-	// Initialize index for all content types here
-	if err := createIndexIfNotPresent("example"); err != nil {
-		return err
-	}
 	return nil
 }
 
-func createIndexIfNotPresent(contentType string) error {
+func createIndex(contentType string) error {
 	var err error
 	if Index[contentType] != nil {
 		return nil
