@@ -8,84 +8,109 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	ht "github.com/urantiatech/kit/transport/http"
 )
 
+// Client structure
+type Client struct {
+	DNS string
+}
+
+// New - create a new Client
+func (c *Client) New(dns string) {
+	c.DNS = dns
+}
+
 // Create - creates a new item
-func Create(item *api.Item, dns string) (*api.Response, error) {
+func (c *Client) Create(contentType string, content interface{}) (interface{}, error) {
 	ctx := context.Background()
-	tgt, err := url.Parse("http://" + dns + "/create")
+	tgt, err := url.Parse("http://" + c.DNS + "/create")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
-	resp, err := endPoint(ctx, item)
+	req := api.CreateRequest{Type: contentType, Content: content}
+	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.(api.Response), nil
+	return resp.(api.Response).Content, nil
 }
 
 // Read - retreives an item from the DB
-func Read(item *api.Item, dns string) (*api.Response, error) {
+func (c *Client) Read(contentType, slug string) (interface{}, error) {
 	ctx := context.Background()
-	tgt, err := url.Parse("http://" + dns + "/read")
+	tgt, err := url.Parse("http://" + c.DNS + "/read")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
-	resp, err := endPoint(ctx, item)
+	req := api.ReadRequest{Type: contentType, Slug: slug}
+	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.(api.Response), nil
+	return resp.(api.Response).Content, nil
 }
 
 // Update - updated an existing item
-func Update(item *api.Item, dns string) (*api.Response, error) {
+func (c *Client) Update(contentType, slug string, content interface{}) (interface{}, error) {
 	ctx := context.Background()
-	tgt, err := url.Parse("http://" + dns + "/update")
+	tgt, err := url.Parse("http://" + c.DNS + "/update")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
-	resp, err := endPoint(ctx, item)
+	req := api.UpdateRequest{Type: contentType, Slug: slug, Content: content}
+	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.(api.Response), nil
+	return resp.(api.Response).Content, nil
 }
 
 // Delete - deletes an item from DB
-func Delete(item *api.Item, dns string) (*api.Response, error) {
+func (c *Client) Delete(contentType, slug string) (interface{}, error) {
 	ctx := context.Background()
-	tgt, err := url.Parse("http://" + dns + "/delete")
+	tgt, err := url.Parse("http://" + c.DNS + "/delete")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
-	resp, err := endPoint(ctx, item)
+	req := api.DeleteRequest{Type: contentType, Slug: slug}
+	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return &resp.(api.Response), nil
+	return resp.(api.Response).Content, nil
 }
 
 // Search - searches for query
-func Search(item *api.Item, dns string) (*api.SearchResults, error) {
+func (c *Client) Search(contentType, query string, startDate, endDate time.Time, limit, skip int) (
+	[]interface{}, int, int, int, error) {
 	ctx := context.Background()
-	tgt, err := url.Parse("http://" + dns + "/search")
+	tgt, err := url.Parse("http://" + c.DNS + "/search")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
-	resp, err := endPoint(ctx, item)
-	if err != nil {
-		return nil, err
+	req := api.SearchRequest{
+		Type:      contentType,
+		Query:     query,
+		StartDate: startDate,
+		EndDate:   endDate,
+		Limit:     limit,
+		Skip:      skip,
 	}
-	return &resp.(api.SearchResults), nil
+	resp, err := endPoint(ctx, req)
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+	r := resp.(api.SearchResults)
+	return r.Results, r.Total, r.Limit, r.Skip, nil
 }
 
 func encodeRequest(ctx context.Context, r *http.Request, request interface{}) error {
@@ -103,4 +128,12 @@ func decodeResponse(ctx context.Context, r *http.Response) (interface{}, error) 
 		return nil, err
 	}
 	return response, nil
+}
+
+func decodeSearchResults(ctx context.Context, r *http.Response) (interface{}, error) {
+	var results api.SearchResults
+	if err := json.NewDecoder(r.Body).Decode(&results); err != nil {
+		return nil, err
+	}
+	return results, nil
 }

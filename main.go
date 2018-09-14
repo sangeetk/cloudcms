@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	_ "git.urantiatech.com/cloudcms/cloudcms/client"
 	s "git.urantiatech.com/cloudcms/cloudcms/service"
 	"github.com/gorilla/mux"
 	h "github.com/urantiatech/kit/transport/http"
