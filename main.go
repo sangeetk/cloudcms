@@ -9,6 +9,7 @@ import (
 	"strconv"
 
 	_ "git.urantiatech.com/cloudcms/cloudcms/client"
+	_ "git.urantiatech.com/cloudcms/cloudcms/content"
 	s "git.urantiatech.com/cloudcms/cloudcms/service"
 	"github.com/gorilla/mux"
 	h "github.com/urantiatech/kit/transport/http"
@@ -16,12 +17,13 @@ import (
 
 func main() {
 	// Parse command line parameters
-	var port, syncPort int
-	var syncHost, dbFile string
+	var port int
+	var ip, upstream, dbFile, syncFile string
+	flag.StringVar(&ip, "ip", "127.0.0.1", "The local IP address")
 	flag.IntVar(&port, "port", 8080, "Port")
-	flag.StringVar(&syncHost, "syncHost", "localhost", "Sync server hostname/IP")
-	flag.IntVar(&syncPort, "syncPort", 9090, "Sync server port")
 	flag.StringVar(&dbFile, "dbFile", "cloudcms.db", "The database filename")
+	flag.StringVar(&syncFile, "syncFile", "cloudcms.sync", "The workers database filename")
+	flag.StringVar(&upstream, "upstream", "", "Upstream server hostname/IP")
 	flag.Parse()
 
 	log.SetFlags(log.Lshortfile)
@@ -32,20 +34,16 @@ func main() {
 			port = int(p)
 		}
 	}
-	if os.Getenv("SYNC_HOST") != "" {
-		syncHost = os.Getenv("SYNC_HOST")
+	if os.Getenv("LOCAL_IP") != "" {
+		ip = os.Getenv("LOCAL_IP")
 	}
-	if os.Getenv("SYNC_PORT") != "" {
-		p, err := strconv.ParseInt(os.Getenv("SYNC_PORT"), 10, 32)
-		if err != nil {
-			syncPort = int(p)
-		}
+	if os.Getenv("UPSTREAM") != "" {
+		upstream = os.Getenv("UPSTREAM")
 	}
 
-	if err := s.Initialize(dbFile); err != nil {
-		log.Fatal(err)
+	if err := s.Initialize(dbFile, syncFile, ip, port); err != nil {
+		log.Fatal(err.Error())
 	}
-
 	var svc s.Service
 	svc = s.Service{}
 

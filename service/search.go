@@ -17,7 +17,7 @@ func (s *Service) Search(ctx context.Context, req *api.SearchRequest) (*api.Sear
 	var searchRequest *bleve.SearchRequest
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = ErrorNotFound.Error()
+		resp.Err = ErrorInvalidContentType.Error()
 		return &resp, nil
 	}
 

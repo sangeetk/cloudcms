@@ -14,10 +14,11 @@ import (
 // Delete - creates a single item
 func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool) (*api.Response, error) {
 	var resp = api.Response{Type: req.Type}
+	var db *bolt.DB
 	var err error
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = ErrorNotFound.Error()
+		resp.Err = ErrorInvalidContentType.Error()
 		return &resp, nil
 	}
 
@@ -44,13 +45,13 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 	// Open database in read-write mode
 	// It will be created if it doesn't exist.
 	//options := bolt.Options{ReadOnly: false}
-	DB, err = bolt.Open(dbFile, 0644, nil)
+	db, err = bolt.Open(DBFile, 0644, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer DB.Close()
+	defer db.Close()
 
-	err = DB.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Type))
 		if b == nil {
 			return ErrorNotFound

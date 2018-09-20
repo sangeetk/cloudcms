@@ -11,5 +11,15 @@ type Header struct {
 	DeletedAt int64  `json:"deleted_at"`
 }
 
-// Item is a generic content type
-type Item map[string]interface{}
+// Types is a map used to reference a type name to its actual Editable type
+// mainly for lookups in /admin route based utilities
+var Types map[string]func() interface{}
+
+func init() {
+	Types = make(map[string]func() interface{})
+}
+
+// IndexContent enables Searching
+func (h *Header) IndexContent() bool {
+	return false
+}

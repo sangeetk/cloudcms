@@ -14,9 +14,10 @@ import (
 // Read - returns a single item
 func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response, error) {
 	var resp = api.Response{Type: req.Type}
+	var db *bolt.DB
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = ErrorNotFound.Error()
+		resp.Err = ErrorInvalidContentType.Error()
 		return &resp, nil
 	}
 
@@ -29,14 +30,14 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 	// Open database in read-only mode
 	// It will be created if it doesn't exist.
 	options := bolt.Options{ReadOnly: true}
-	DB, err = bolt.Open(dbFile, 0644, &options)
+	db, err = bolt.Open(DBFile, 0644, &options)
 	if err != nil {
 		resp.Err = ErrorNotFound.Error()
 		return &resp, nil
 	}
-	defer DB.Close()
+	defer db.Close()
 
-	err = DB.View(func(tx *bolt.Tx) error {
+	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Type))
 		if b == nil {
 			return ErrorNotFound
