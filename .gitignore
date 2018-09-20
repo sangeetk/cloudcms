@@ -1,3 +1,4 @@
 cloudcms
 *.db
+*.sync
 *.index
