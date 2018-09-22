@@ -11,37 +11,48 @@ import (
 	_ "git.urantiatech.com/cloudcms/cloudcms/client"
 	_ "git.urantiatech.com/cloudcms/cloudcms/content"
 	s "git.urantiatech.com/cloudcms/cloudcms/service"
+	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/gorilla/mux"
 	h "github.com/urantiatech/kit/transport/http"
 )
 
 func main() {
 	// Parse command line parameters
-	var port int
-	var ip, upstream, dbFile, syncFile string
-	flag.StringVar(&ip, "ip", "127.0.0.1", "The local IP address")
-	flag.IntVar(&port, "port", 8080, "Port")
+	var port, upstreamPort int
+	var ip, upstreamIP, dbFile, syncFile string
+	flag.StringVar(&ip, "ip", "127.0.0.1", "The local worker IP address")
+	flag.IntVar(&port, "port", 8080, "Port number of local worker")
 	flag.StringVar(&dbFile, "dbFile", "cloudcms.db", "The database filename")
 	flag.StringVar(&syncFile, "syncFile", "cloudcms.sync", "The workers database filename")
-	flag.StringVar(&upstream, "upstream", "", "Upstream server hostname/IP")
+	flag.StringVar(&upstreamIP, "upstreamIP", "", "Upstream server hostname/IP")
+	flag.IntVar(&upstreamPort, "upstreamPort", 8081, "The Port number of upstream server")
 	flag.Parse()
 
 	log.SetFlags(log.Lshortfile)
 
-	if os.Getenv("PORT") != "" {
-		p, err := strconv.ParseInt(os.Getenv("PORT"), 10, 32)
+	if os.Getenv("LOCAL_WORKER_IP") != "" {
+		ip = os.Getenv("LOCAL_WORKER_IP")
+	}
+	if os.Getenv("LOCAL_WORKER_PORT") != "" {
+		p, err := strconv.ParseInt(os.Getenv("LOCAL_WORKER_PORT"), 10, 32)
 		if err != nil {
 			port = int(p)
 		}
 	}
-	if os.Getenv("LOCAL_IP") != "" {
-		ip = os.Getenv("LOCAL_IP")
+	if os.Getenv("UPSTREAM_IP") != "" {
+		upstreamIP = os.Getenv("UPSTREAM_IP")
 	}
-	if os.Getenv("UPSTREAM") != "" {
-		upstream = os.Getenv("UPSTREAM")
+	if os.Getenv("UPSTREAM_PORT") != "" {
+		p, err := strconv.ParseInt(os.Getenv("UPSTREAM_PORT"), 10, 32)
+		if err != nil {
+			upstreamPort = int(p)
+		}
 	}
 
-	if err := s.Initialize(dbFile, syncFile, ip, port); err != nil {
+	local := worker.Worker{Host: ip, Port: port}
+	upstream := worker.Worker{Host: upstreamIP, Port: upstreamPort}
+
+	if err := s.Initialize(dbFile, syncFile, &local, &upstream); err != nil {
 		log.Fatal(err.Error())
 	}
 	var svc s.Service

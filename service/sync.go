@@ -3,53 +3,46 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"net/http"
 	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
+	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/urantiatech/kit/endpoint"
 )
 
 // LastSyncTimestamp in nanoseconds
 var LastSyncTimestamp int64
 
-// ErrorInvalidOperation - invalid operation
-var ErrorInvalidOperation = errors.New("Invalid Operation")
-
-// SyncRequest sync request
-type SyncRequest struct {
-	Operation string             `json:"operation"`
-	Timestamp int64              `json:"timestamp"`
-	Source    string             `json:"source"`
-	Create    *api.CreateRequest `json:"create"`
-	Update    *api.UpdateRequest `json:"update"`
-	Delete    *api.DeleteRequest `json:"delete"`
-}
-
-// SyncResponse sync response
-type SyncResponse struct {
-	Operation string        `json:"operation"`
-	Timestamp int64         `json:"timestamp"`
-	Response  *api.Response `json:"response"`
-	Err       string        `json:"err,omitempty"`
-}
-
 // Sync request
-func (s *Service) Sync(ctx context.Context, req *SyncRequest) (*SyncResponse, error) {
-	var syncResp SyncResponse
+func (s *Service) Sync(ctx context.Context, req *worker.SyncRequest) (*worker.SyncResponse, error) {
+	var syncResp worker.SyncResponse
+	var content = req.Response
 	var resp *api.Response
 
 	// Call Create, Update or Delete service based on Operation
 	switch req.Operation {
 	case "create":
-		resp, _ = s.Create(ctx, req.Create, true)
+		createReq := api.CreateRequest{
+			Type:    req.Type,
+			Content: content,
+		}
+		resp, _ = s.Create(ctx, &createReq, true)
 	case "update":
-		resp, _ = s.Update(ctx, req.Update, true)
+		updateReq := api.UpdateRequest{
+			Type:    req.Type,
+			Slug:    req.Slug,
+			Content: content,
+		}
+		resp, _ = s.Update(ctx, &updateReq, true)
 	case "delete":
-		resp, _ = s.Delete(ctx, req.Delete, true)
+		deleteReq := api.DeleteRequest{
+			Type: req.Type,
+			Slug: req.Slug,
+		}
+		resp, _ = s.Delete(ctx, &deleteReq, true)
 	default:
-		syncResp.Err = ErrorInvalidOperation.Error()
+		syncResp.Err = api.ErrorInvalidOperation.Error()
 		return &syncResp, nil
 	}
 
@@ -57,7 +50,7 @@ func (s *Service) Sync(ctx context.Context, req *SyncRequest) (*SyncResponse, er
 	syncResp.Timestamp = time.Now().UnixNano()
 
 	if resp.Err != "" {
-		syncResp.Err = resp.Err
+		syncResp.Err = api.ErrorSync.Error()
 	} else {
 		syncResp.Response = resp
 	}
@@ -67,14 +60,14 @@ func (s *Service) Sync(ctx context.Context, req *SyncRequest) (*SyncResponse, er
 // SyncEndpoint - creates endpoint for Sync service
 func SyncEndpoint(svc Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		req := request.(SyncRequest)
+		req := request.(worker.SyncRequest)
 		return svc.Sync(ctx, &req)
 	}
 }
 
 // DecodeSyncReq - decodes the incoming request
 func DecodeSyncReq(ctx context.Context, r *http.Request) (interface{}, error) {
-	var request SyncRequest
+	var request worker.SyncRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		return nil, err
 	}

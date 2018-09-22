@@ -31,7 +31,7 @@ func (c *Client) Create(contentType string, content interface{}) (interface{}, e
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := api.CreateRequest{Type: contentType, Content: content}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
@@ -47,7 +47,7 @@ func (c *Client) Read(contentType, slug string) (interface{}, error) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := api.ReadRequest{Type: contentType, Slug: slug}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
@@ -63,7 +63,7 @@ func (c *Client) Update(contentType, slug string, content interface{}) (interfac
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := api.UpdateRequest{Type: contentType, Slug: slug, Content: content}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
@@ -79,7 +79,7 @@ func (c *Client) Delete(contentType, slug string) (interface{}, error) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := api.DeleteRequest{Type: contentType, Slug: slug}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
@@ -96,7 +96,7 @@ func (c *Client) Search(contentType, query string, startDate, endDate time.Time,
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := api.SearchRequest{
 		Type:      contentType,
 		Query:     query,
@@ -113,7 +113,8 @@ func (c *Client) Search(contentType, query string, startDate, endDate time.Time,
 	return r.Results, r.Total, r.Limit, r.Skip, nil
 }
 
-func encodeRequest(ctx context.Context, r *http.Request, request interface{}) error {
+// EncodeRequest encodes the request as JSON
+func EncodeRequest(ctx context.Context, r *http.Request, request interface{}) error {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(request); err != nil {
 		return err
@@ -122,7 +123,8 @@ func encodeRequest(ctx context.Context, r *http.Request, request interface{}) er
 	return nil
 }
 
-func decodeResponse(ctx context.Context, r *http.Response) (interface{}, error) {
+// DecodeResponse decodes the response from the service
+func DecodeResponse(ctx context.Context, r *http.Response) (interface{}, error) {
 	var response api.Response
 	if err := json.NewDecoder(r.Body).Decode(&response); err != nil {
 		return nil, err

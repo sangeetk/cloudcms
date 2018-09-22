@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
+	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/boltdb/bolt"
 	"github.com/urantiatech/kit/endpoint"
 )
@@ -19,14 +20,20 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 	var db *bolt.DB
 	var err error
 
+	// Validate the content type
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = ErrorInvalidContentType.Error()
+		resp.Err = api.ErrorInvalidContentType.Error()
 		return &resp, nil
 	}
 
-	// Create request as sync msg contains full information
-	// Simply index the content and return
+	// Forward request to Upstream Server
+	if !sync && Upstream.Host != "" {
+		return LocalWorker.Forward("create", req, Upstream)
+	}
+
+	// Sync message
 	if sync {
+		// Simply index the content and return
 		IndexLock.Lock()
 		defer IndexLock.Unlock()
 
@@ -39,7 +46,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		return &resp, nil
 	}
 
-	// Normal create request
+	// Normal request
 	// Open database in read-write mode
 	db, err = bolt.Open(DBFile, 0644, nil)
 	if err != nil {
@@ -50,7 +57,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Type))
 		if b == nil {
-			return ErrorInvalidContentType
+			return api.ErrorInvalidContentType
 		}
 
 		nextSeq, err := b.NextSequence()
@@ -102,7 +109,15 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		resp.Err = err.Error()
 	}
 
-	// Sync others
+	// Sync other workers
+	sreq := worker.SyncRequest{
+		Type:      req.Type,
+		Operation: "create",
+		Timestamp: time.Now().Unix(),
+		Source:    LocalWorker.String(),
+		Response:  &resp,
+	}
+	LocalWorker.SyncPeers(&sreq)
 
 	return &resp, nil
 }

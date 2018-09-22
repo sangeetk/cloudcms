@@ -17,7 +17,7 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 	var db *bolt.DB
 
 	if _, ok := Index[req.Type]; !ok {
-		resp.Err = ErrorInvalidContentType.Error()
+		resp.Err = api.ErrorInvalidContentType.Error()
 		return &resp, nil
 	}
 
@@ -32,7 +32,7 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 	options := bolt.Options{ReadOnly: true}
 	db, err = bolt.Open(DBFile, 0644, &options)
 	if err != nil {
-		resp.Err = ErrorNotFound.Error()
+		resp.Err = api.ErrorNotFound.Error()
 		return &resp, nil
 	}
 	defer db.Close()
@@ -40,12 +40,12 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 	err = db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(req.Type))
 		if b == nil {
-			return ErrorNotFound
+			return api.ErrorNotFound
 		}
 
 		val := b.Get([]byte(req.Slug))
 		if val == nil {
-			return ErrorNotFound
+			return api.ErrorNotFound
 		}
 
 		err := json.Unmarshal(val, &resp.Content)
@@ -80,7 +80,7 @@ func (s *Service) ReadFromIndex(ctx context.Context, req *api.ReadRequest) (*api
 	for {
 		searchResult, err := Index[req.Type].Search(searchRequest)
 		if err != nil {
-			resp.Err = ErrorNotFound.Error()
+			resp.Err = api.ErrorNotFound.Error()
 			return &resp, nil
 		}
 
@@ -93,12 +93,12 @@ func (s *Service) ReadFromIndex(ctx context.Context, req *api.ReadRequest) (*api
 		}
 		searchRequest.From += searchRequest.Size
 		if searchRequest.From >= int(searchResult.Total) {
-			resp.Err = ErrorNotFound.Error()
+			resp.Err = api.ErrorNotFound.Error()
 			return &resp, nil
 		}
 	}
 
-	resp.Err = ErrorNotFound.Error()
+	resp.Err = api.ErrorNotFound.Error()
 	return &resp, nil
 }
 

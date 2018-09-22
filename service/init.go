@@ -2,36 +2,25 @@ package service
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"git.urantiatech.com/cloudcms/cloudcms/item"
+	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
 )
 
-// DBFile is the path of database file
-var DBFile string
-
-// SyncFile is the path of sync file
-var SyncFile string
-
-// IP Address of the container/POD/System
-var IP string
-
-// Port number
-var Port int
-
 // Initialize function
-func Initialize(dbFile, syncFile, ip string, port int) error {
+func Initialize(dbFile, syncFile string, local, upstream *worker.Worker) error {
 	var err error
 	var db, syncDB *bolt.DB
 
 	DBFile = dbFile
 	SyncFile = syncFile
-	IP = ip
-	Port = port
+	LocalWorker = local
+	Upstream = upstream
+
 	Index = make(map[string]bleve.Index)
 
 	// Create databse if it doesn't exist.
@@ -59,14 +48,14 @@ func Initialize(dbFile, syncFile, ip string, port int) error {
 	if err != nil {
 		return err
 	}
+
 	// Add the (IP:Port, timestamp) to the database
-	address := fmt.Sprintf("%s:%d", IP, Port)
 	err = syncDB.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("workers"))
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(address), nil)
+		err = b.Put([]byte(LocalWorker.String()), nil)
 		return err
 	})
 	if err != nil {
