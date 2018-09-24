@@ -18,6 +18,7 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 	var resp = api.Response{Type: req.Type}
 	var db *bolt.DB
 	var err error
+	log.Println("Update()", "Type:", req.Type, "Slug:", req.Slug, "Sync:", sync)
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = api.ErrorInvalidContentType.Error()
@@ -26,14 +27,15 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 
 	// Forward request to Upstream Server
 	if !sync && Upstream.Host != "" {
+		log.Println("Forwarding to ", Upstream)
 		return LocalWorker.Forward("update", req, Upstream)
 	}
 
 	// Update request as sync msg contains full information
 	// Simply update the index the content and return
+	log.Println("Update sync: ", req.Slug, sync)
 	if sync {
-		IndexLock.Lock()
-		defer IndexLock.Unlock()
+		log.Println("Received sync message by ", LocalWorker)
 
 		err = Index[req.Type].Index(req.Slug, req.Content)
 		if err != nil {
@@ -45,6 +47,7 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 
 	// Normal update request
 	// Open database in read-write mode
+	log.Println("Normal update request")
 	db, err = bolt.Open(DBFile, 0644, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -87,10 +90,6 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 
 		resp.Content = content
 
-		// Update index
-		IndexLock.Lock()
-		defer IndexLock.Unlock()
-
 		err = Index[req.Type].Index(req.Slug, content)
 		if err != nil {
 			return err
@@ -99,16 +98,20 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 	})
 	if err != nil {
 		resp.Err = err.Error()
+		return &resp, nil
 	}
 
 	// Sync other workers
 	sreq := worker.SyncRequest{
+		Type:      req.Type,
 		Operation: "update",
+		Slug:      req.Slug,
 		Timestamp: time.Now().Unix(),
 		Source:    LocalWorker.String(),
 		Response:  &resp,
 	}
-	LocalWorker.SyncPeers(&sreq)
+	LocalWorker.SyncPeers(SyncFile, &sreq)
+	LocalWorker.SyncChilds(SyncFile, &sreq)
 
 	return &resp, nil
 }

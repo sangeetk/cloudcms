@@ -18,6 +18,7 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 	var resp = api.Response{Type: req.Type}
 	var db *bolt.DB
 	var err error
+	log.Println("Delete()", "Type:", req.Type, "Slug:", req.Slug, "Sync:", sync)
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = api.ErrorInvalidContentType.Error()
@@ -26,14 +27,14 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 
 	// Forward request to Upstream Server
 	if !sync && Upstream.Host != "" {
+		log.Println("Forwarding to ", Upstream)
 		return LocalWorker.Forward("delete", req, Upstream)
 	}
 
 	// Update request as sync msg contains full information
 	// Simply index the content and return
 	if sync {
-		IndexLock.Lock()
-		defer IndexLock.Unlock()
+		log.Println("Received sync message by ", LocalWorker)
 
 		readReq := api.ReadRequest{Type: req.Type, Slug: req.Slug}
 		item, err := s.Read(ctx, &readReq)
@@ -52,6 +53,8 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 	// Open database in read-write mode
 	// It will be created if it doesn't exist.
 	//options := bolt.Options{ReadOnly: false}
+	log.Println("Normal delete request")
+
 	db, err = bolt.Open(DBFile, 0644, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -80,10 +83,6 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 			return err
 		}
 
-		// Delete index
-		IndexLock.Lock()
-		defer IndexLock.Unlock()
-
 		err = Index[req.Type].Delete(req.Slug)
 		if err != nil {
 			return err
@@ -92,16 +91,20 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 	})
 	if err != nil {
 		resp.Err = err.Error()
+		return &resp, nil
 	}
 
 	// Sync other workers
 	sreq := worker.SyncRequest{
+		Type:      req.Type,
 		Operation: "delete",
+		Slug:      req.Slug,
 		Timestamp: time.Now().Unix(),
 		Source:    LocalWorker.String(),
 		Response:  &resp,
 	}
-	LocalWorker.SyncPeers(&sreq)
+	LocalWorker.SyncPeers(SyncFile, &sreq)
+	LocalWorker.SyncChilds(SyncFile, &sreq)
 
 	return &resp, nil
 }

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"net/http"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
@@ -42,7 +43,7 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 		if b == nil {
 			return api.ErrorNotFound
 		}
-
+		log.Println("Reading from the database")
 		val := b.Get([]byte(req.Slug))
 		if val == nil {
 			return api.ErrorNotFound
@@ -69,7 +70,7 @@ func (s *Service) ReadFromIndex(ctx context.Context, req *api.ReadRequest) (*api
 		resp.Err = "Invalid content type"
 		return &resp, nil
 	}
-
+	log.Println("Reading from index")
 	query := bleve.NewMatchAllQuery()
 	searchRequest := bleve.NewSearchRequest(query)
 

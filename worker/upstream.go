@@ -20,7 +20,7 @@ func (w *Worker) Forward(op string, req interface{}, upstream *Worker) (*api.Res
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
+	log.Println("Sending messge to upstream ", up)
 	endPoint := ht.NewClient("POST", up, client.EncodeRequest, client.DecodeResponse).Endpoint()
 
 	switch op {

@@ -2,3 +2,4 @@ cloudcms
 *.db
 *.sync
 *.index
+*.sh

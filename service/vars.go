@@ -1,8 +1,6 @@
 package service
 
 import (
-	"sync"
-
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/blevesearch/bleve"
 )
@@ -24,6 +22,3 @@ const DefaultBucket = "default"
 
 // Index Map
 var Index map[string]bleve.Index
-
-// IndexLock mutex
-var IndexLock sync.Mutex

@@ -51,12 +51,19 @@ func Initialize(dbFile, syncFile string, local, upstream *worker.Worker) error {
 
 	// Add the (IP:Port, timestamp) to the database
 	err = syncDB.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte("workers"))
-		if err != nil {
+		var peers *bolt.Bucket
+
+		if peers, err = tx.CreateBucketIfNotExists([]byte("peers")); err != nil {
 			return err
 		}
-		err = b.Put([]byte(LocalWorker.String()), nil)
-		return err
+		if err = peers.Put([]byte(LocalWorker.String()), nil); err != nil {
+			return err
+		}
+
+		if _, err = tx.CreateBucketIfNotExists([]byte("childs")); err != nil {
+			return err
+		}
+		return nil
 	})
 	if err != nil {
 		syncDB.Close()
@@ -71,10 +78,6 @@ func Initialize(dbFile, syncFile string, local, upstream *worker.Worker) error {
 		return err
 	}
 	defer db.Close()
-
-	// Lock the index
-	IndexLock.Lock()
-	defer IndexLock.Unlock()
 
 	// Initialize index for all Content Types
 	for contentType := range item.Types {

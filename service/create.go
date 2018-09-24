@@ -19,6 +19,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 	var resp = api.Response{Type: req.Type}
 	var db *bolt.DB
 	var err error
+	log.Println("Create()", "Type:", req.Type, "Sync:", sync)
 
 	// Validate the content type
 	if _, ok := Index[req.Type]; !ok {
@@ -28,14 +29,14 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 
 	// Forward request to Upstream Server
 	if !sync && Upstream.Host != "" {
+		log.Println("Forwarding to ", Upstream)
 		return LocalWorker.Forward("create", req, Upstream)
 	}
 
 	// Sync message
 	if sync {
 		// Simply index the content and return
-		IndexLock.Lock()
-		defer IndexLock.Unlock()
+		log.Println("Received sync message by ", LocalWorker)
 
 		var item = (req.Content).(map[string]interface{})
 		err = Index[req.Type].Index(item["slug"].(string), item)
@@ -48,6 +49,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 
 	// Normal request
 	// Open database in read-write mode
+	log.Println("Normal create request")
 	db, err = bolt.Open(DBFile, 0644, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -96,8 +98,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		resp.Content = item
 
 		// Create index
-		IndexLock.Lock()
-		defer IndexLock.Unlock()
+		log.Println("Index the item ", newSlug)
 
 		err = Index[req.Type].Index(newSlug, item)
 		if err != nil {
@@ -107,6 +108,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 	})
 	if err != nil {
 		resp.Err = err.Error()
+		return &resp, nil
 	}
 
 	// Sync other workers
@@ -117,7 +119,8 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		Source:    LocalWorker.String(),
 		Response:  &resp,
 	}
-	LocalWorker.SyncPeers(&sreq)
+	LocalWorker.SyncPeers(SyncFile, &sreq)
+	LocalWorker.SyncChilds(SyncFile, &sreq)
 
 	return &resp, nil
 }
