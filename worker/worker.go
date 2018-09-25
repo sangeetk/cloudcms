@@ -1,7 +1,12 @@
 package worker
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
@@ -44,5 +49,24 @@ type SyncResponse struct {
 }
 
 func (w *Worker) String() string {
-	return fmt.Sprintf("%s:%d", w.Host, w.Port)
+	return fmt.Sprintf("%s:%d", w.Host, w.Port+1)
+}
+
+// encodeRequest encodes the request as JSON
+func encodeRequest(ctx context.Context, r *http.Request, request interface{}) error {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(request); err != nil {
+		return err
+	}
+	r.Body = ioutil.NopCloser(&buf)
+	return nil
+}
+
+// decodeResponse decodes the response from the service
+func decodeResponse(ctx context.Context, r *http.Response) (interface{}, error) {
+	var response SyncResponse
+	if err := json.NewDecoder(r.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	return response, nil
 }

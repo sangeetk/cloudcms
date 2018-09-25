@@ -18,7 +18,7 @@ import (
 
 func main() {
 	// Parse command line parameters
-	var host, externalHost, upstreamHost, dbFile, syncFile string
+	var host, externalHost, upstreamHost, dbFile, syncFile, key string
 	var port, externalPort, upstreamPort int
 
 	flag.StringVar(&host, "host", "localhost", "The local hostname/IP address")
@@ -29,6 +29,8 @@ func main() {
 	flag.IntVar(&upstreamPort, "upstreamPort", 8080, "The upstream port number")
 	flag.StringVar(&dbFile, "dbFile", "cloudcms.db", "The database filename")
 	flag.StringVar(&syncFile, "syncFile", "cloudcms.sync", "The workers database filename")
+	flag.StringVar(&key, "key", "", "Key that is used by other servers/clusters to join master")
+
 	flag.Parse()
 
 	log.SetFlags(log.Lshortfile)
@@ -81,8 +83,15 @@ func main() {
 	r.Handle("/update", h.NewServer(s.UpdateEndpoint(svc), s.DecodeUpdateReq, s.Encode))
 	r.Handle("/delete", h.NewServer(s.DeleteEndpoint(svc), s.DecodeDeleteReq, s.Encode))
 	r.Handle("/search", h.NewServer(s.SearchEndpoint(svc), s.DecodeSearchReq, s.Encode))
-	r.Handle("/sync", h.NewServer(s.SyncEndpoint(svc), s.DecodeSyncReq, s.Encode))
-	r.Handle("/ping", h.NewServer(s.PingEndpoint(svc), s.DecodePingReq, s.Encode))
+
+	sync := mux.NewRouter()
+	sync.Handle("/sync", h.NewServer(s.SyncEndpoint(svc), s.DecodeSyncReq, s.Encode))
+	sync.Handle("/ping", h.NewServer(s.PingEndpoint(svc), s.DecodePingReq, s.Encode))
+	if upstreamHost == "" && key != "" {
+		// This is master server/cluster, allow other servers/clusters to join this
+		sync.Handle("/join", h.NewServer(s.JoinEndpoint(svc), s.DecodeJoinReq, s.Encode))
+	}
+	go http.ListenAndServe(fmt.Sprintf(":%d", port+1), sync)
 
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }

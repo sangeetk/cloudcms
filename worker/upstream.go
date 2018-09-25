@@ -16,7 +16,7 @@ func (w *Worker) Forward(op string, req interface{}, upstream *Worker) (*api.Res
 	var err error
 
 	ctx := context.Background()
-	up, err := url.Parse("https://" + upstream.String() + "/create")
+	up, err := url.Parse("http://" + upstream.String() + "/create")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -25,13 +25,13 @@ func (w *Worker) Forward(op string, req interface{}, upstream *Worker) (*api.Res
 
 	switch op {
 	case "create":
-		creq := req.(api.CreateRequest)
+		creq := req.(*api.CreateRequest)
 		resp, err = endPoint(ctx, creq)
 	case "update":
-		ureq := req.(api.UpdateRequest)
+		ureq := req.(*api.UpdateRequest)
 		resp, err = endPoint(ctx, ureq)
 	case "delete":
-		dreq := req.(api.DeleteRequest)
+		dreq := req.(*api.DeleteRequest)
 		resp, err = endPoint(ctx, dreq)
 	default:
 		return nil, api.ErrorInvalidOperation
