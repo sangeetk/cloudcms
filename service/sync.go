@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -28,7 +27,6 @@ func (s *Service) Sync(ctx context.Context, req *worker.SyncRequest) (*worker.Sy
 			Type:    req.Type,
 			Content: content,
 		}
-		log.Println("Calling s.Create")
 		resp, _ = s.Create(ctx, &createReq, true)
 	case "update":
 		updateReq := api.UpdateRequest{
@@ -36,14 +34,12 @@ func (s *Service) Sync(ctx context.Context, req *worker.SyncRequest) (*worker.Sy
 			Slug:    req.Slug,
 			Content: content,
 		}
-		log.Println("Calling s.Update")
 		resp, _ = s.Update(ctx, &updateReq, true)
 	case "delete":
 		deleteReq := api.DeleteRequest{
 			Type: req.Type,
 			Slug: req.Slug,
 		}
-		log.Println("Calling s.Delete")
 		resp, _ = s.Delete(ctx, &deleteReq, true)
 	default:
 		syncResp.Err = api.ErrorInvalidOperation.Error()

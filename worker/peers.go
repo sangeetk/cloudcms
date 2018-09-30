@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"log"
 	"net/url"
 
 	"github.com/boltdb/bolt"
@@ -21,33 +20,38 @@ func (w *Worker) SyncPeers(syncFile string, sreq *SyncRequest) error {
 	// Add the (IP:Port, timestamp) to the database
 	err = syncDB.Update(func(tx *bolt.Tx) error {
 		var peers *bolt.Bucket
+		var unreachable = make(map[string]bool)
 
 		peers = tx.Bucket([]byte("peers"))
 		if peers == nil {
 			return nil
 		}
 		c := peers.Cursor()
-		for peer, _ := c.First(); peer != nil; peer, _ = c.Next() {
-
-			if w.String() == string(peer[:]) {
+		var peer string
+		for p, _ := c.First(); p != nil; p, _ = c.Next() {
+			peer = string(p[:])
+			if w.String() == peer {
 				// Ignore sync message when it was sent by itself
 				continue
 			}
 
 			// Send sync request to the peer
 			ctx := context.Background()
-			tgt, err := url.Parse("http://" + string(peer[:]) + "/sync")
+			tgt, err := url.Parse("http://" + peer + "/sync")
 			if err != nil {
-				// remove the peer
+				// remove the junk url
 				continue
 			}
-			log.Println("Sending sync msg to ", tgt)
 			endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
 			_, err = endPoint(ctx, sreq)
 			if err != nil {
 				// remove the peer
+				unreachable[peer] = true
 				continue
 			}
+		}
+		for peer = range unreachable {
+			peers.Delete([]byte(peer))
 		}
 		return nil
 	})

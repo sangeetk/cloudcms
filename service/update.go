@@ -18,25 +18,15 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 	var resp = api.Response{Type: req.Type}
 	var db *bolt.DB
 	var err error
-	log.Println("Update()", "Type:", req.Type, "Slug:", req.Slug, "Sync:", sync)
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = api.ErrorInvalidContentType.Error()
 		return &resp, nil
 	}
 
-	// Forward request to Upstream Server
-	if !sync && Upstream.Host != "" {
-		log.Println("Forwarding to ", Upstream)
-		return LocalWorker.Forward("update", req, Upstream)
-	}
-
 	// Update request as sync msg contains full information
 	// Simply update the index the content and return
-	log.Println("Update sync: ", req.Slug, sync)
 	if sync {
-		log.Println("Received sync message by ", LocalWorker)
-
 		err = Index[req.Type].Index(req.Slug, req.Content)
 		if err != nil {
 			return &resp, nil
@@ -47,7 +37,6 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 
 	// Normal update request
 	// Open database in read-write mode
-	log.Println("Normal update request")
 	db, err = bolt.Open(DBFile, 0644, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -111,7 +100,6 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 		Response:  &resp,
 	}
 	LocalWorker.SyncPeers(SyncFile, &sreq)
-	LocalWorker.SyncChilds(SyncFile, &sreq)
 
 	return &resp, nil
 }

@@ -14,9 +14,6 @@ var SyncFile string
 // LocalWorker is the current worker process
 var LocalWorker *worker.Worker
 
-// Upstream worker is upstream server
-var Upstream *worker.Worker
-
 // DefaultBucket name
 const DefaultBucket = "default"
 

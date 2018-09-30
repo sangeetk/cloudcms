@@ -12,14 +12,13 @@ import (
 )
 
 // Initialize function
-func Initialize(dbFile, syncFile string, local, upstream *worker.Worker) error {
+func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 	var err error
 	var db, syncDB *bolt.DB
 
 	DBFile = dbFile
 	SyncFile = syncFile
 	LocalWorker = local
-	Upstream = upstream
 
 	Index = make(map[string]bleve.Index)
 
@@ -57,10 +56,6 @@ func Initialize(dbFile, syncFile string, local, upstream *worker.Worker) error {
 			return err
 		}
 		if err = peers.Put([]byte(LocalWorker.String()), nil); err != nil {
-			return err
-		}
-
-		if _, err = tx.CreateBucketIfNotExists([]byte("childs")); err != nil {
 			return err
 		}
 		return nil
