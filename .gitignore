@@ -3,3 +3,6 @@ cloudcms
 *.sync
 *.index
 *.sh
+main/main
+main/*.sync
+main/*.db
