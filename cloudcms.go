@@ -54,6 +54,7 @@ func Run() {
 	r.Handle("/update", h.NewServer(s.UpdateEndpoint(svc), s.DecodeUpdateReq, s.Encode))
 	r.Handle("/delete", h.NewServer(s.DeleteEndpoint(svc), s.DecodeDeleteReq, s.Encode))
 	r.Handle("/search", h.NewServer(s.SearchEndpoint(svc), s.DecodeSearchReq, s.Encode))
+	r.Handle("/schema", h.NewServer(s.SchemaEndpoint(svc), s.DecodeSchemaReq, s.Encode))
 
 	sync := mux.NewRouter()
 	sync.Handle("/sync", h.NewServer(s.SyncEndpoint(svc), s.DecodeSyncReq, s.Encode))
