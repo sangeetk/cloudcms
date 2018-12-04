@@ -22,11 +22,11 @@ type Example struct {
 func init() {
 	item.Types[strings.ToLower("Example")] = func() interface{} { return new(Example) }
 	item.Fields[strings.ToLower("Example")] = append(item.HeaderFields, []item.Field{
-		{Name: "Body", Type: "string", Label: "Enter the Body here", Widget: "input", Value: "This is body text"},
-		{Name: "Date", Type: "date", Label: "Enter the Date here", Widget: "input", Value: time.Now()},
-		{Name: "Array", Type: "[]string", Label: "Enter Array here", Widget: "select", Value: []string{"first", "second", "third"}},
-		{Name: "Integer", Type: "int", Label: "Enter the Integer here", Widget: "input", Value: 100},
-		{Name: "Bool", Type: "bool", Label: "Please enter true or false", Widget: "checkbox", Value: true},
+		{Name: "Body", Type: "string", Label: "Enter the Body here", Widget: item.WidgetInput, Value: "This is body text"},
+		{Name: "Date", Type: "date", Label: "Enter the Date here", Widget: item.WidgetInput, Value: time.Now()},
+		{Name: "Array", Type: "[]string", Label: "Enter Array here", Widget: item.WidgetSelect, Value: []string{"first", "second", "third"}},
+		{Name: "Integer", Type: "int", Label: "Enter the Integer here", Widget: item.WidgetInput, Value: 100},
+		{Name: "Bool", Type: "bool", Label: "Please enter true or false", Widget: item.WidgetCheckbox, Value: true},
 	}...)
 }
 
