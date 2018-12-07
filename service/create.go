@@ -26,7 +26,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		return &resp, nil
 	}
 
-	// Sync message
+	// Sync message from peer
 	if sync {
 		// Simply index the content and return
 		var item = (req.Content).(map[string]interface{})
@@ -92,6 +92,8 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		if err != nil {
 			return err
 		}
+
+		// Add the request to LOG bucket
 		return nil
 	})
 	if err != nil {

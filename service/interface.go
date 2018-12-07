@@ -17,6 +17,14 @@ type Interface interface {
 	Delete(context.Context, *api.DeleteRequest, bool) (*api.Response, error)
 	Search(context.Context, *api.SearchRequest) (*api.SearchResults, error)
 
+	// Schema request from admin interface
+	Schema(context.Context, *api.SchemaRequest) (*api.SchemaResponse, error)
+
+	// Pull request from downstream connections
+	Pull(context.Context, *api.PullRequest) (*api.PullResponse, error)
+	// Push request from upstream server
+	Push(context.Context, *api.PushRequest) (*api.PushResponse, error)
+
 	// Only between peer-to-peer communication
 	Ping(context.Context, *worker.PingRequest) (*worker.PingResponse, error)
 	Sync(context.Context, *worker.SyncRequest) (*worker.SyncResponse, error)

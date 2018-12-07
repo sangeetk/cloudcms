@@ -55,6 +55,8 @@ func Run() {
 	r.Handle("/delete", h.NewServer(s.DeleteEndpoint(svc), s.DecodeDeleteReq, s.Encode))
 	r.Handle("/search", h.NewServer(s.SearchEndpoint(svc), s.DecodeSearchReq, s.Encode))
 	r.Handle("/schema", h.NewServer(s.SchemaEndpoint(svc), s.DecodeSchemaReq, s.Encode))
+	r.Handle("/pull", h.NewServer(s.PullEndpoint(svc), s.DecodePullReq, s.Encode))
+	r.Handle("/push", h.NewServer(s.PushEndpoint(svc), s.DecodePushReq, s.Encode))
 
 	sync := mux.NewRouter()
 	sync.Handle("/sync", h.NewServer(s.SyncEndpoint(svc), s.DecodeSyncReq, s.Encode))

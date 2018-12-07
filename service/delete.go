@@ -77,6 +77,9 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 		if err != nil {
 			return err
 		}
+
+		// Add the request to LOG bucket
+
 		return nil
 	})
 	if err != nil {

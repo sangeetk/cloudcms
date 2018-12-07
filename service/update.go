@@ -83,6 +83,9 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 		if err != nil {
 			return err
 		}
+
+		// Add the request to LOG bucket
+
 		return nil
 	})
 	if err != nil {
