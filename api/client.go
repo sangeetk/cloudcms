@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,11 +21,15 @@ func Create(contentType string, content interface{}, dns string) (interface{}, e
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := CreateRequest{Type: contentType, Content: content}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.(Response).Err != "" {
+		return nil, errors.New(resp.(Response).Err)
 	}
 	return resp.(Response).Content, nil
 }
@@ -36,11 +41,15 @@ func Read(contentType, slug string, dns string) (interface{}, error) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := ReadRequest{Type: contentType, Slug: slug}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.(Response).Err != "" {
+		return nil, errors.New(resp.(Response).Err)
 	}
 	return resp.(Response).Content, nil
 }
@@ -52,11 +61,15 @@ func Update(contentType, slug string, content interface{}, dns string) (interfac
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := UpdateRequest{Type: contentType, Slug: slug, Content: content}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.(Response).Err != "" {
+		return nil, errors.New(resp.(Response).Err)
 	}
 	return resp.(Response).Content, nil
 }
@@ -68,11 +81,15 @@ func Delete(contentType, slug string, dns string) (interface{}, error) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := DeleteRequest{Type: contentType, Slug: slug}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.(Response).Err != "" {
+		return nil, errors.New(resp.(Response).Err)
 	}
 	return resp.(Response).Content, nil
 }
@@ -85,6 +102,7 @@ func Search(contentType, query string, startDate, endDate time.Time, limit, skip
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
 	req := SearchRequest{
 		Type:      contentType,
@@ -97,6 +115,9 @@ func Search(contentType, query string, startDate, endDate time.Time, limit, skip
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, 0, 0, 0, err
+	}
+	if resp.(SearchResults).Err != "" {
+		return nil, 0, 0, 0, errors.New(resp.(SearchResults).Err)
 	}
 	r := resp.(SearchResults)
 	return r.Results, r.Total, r.Limit, r.Skip, nil
