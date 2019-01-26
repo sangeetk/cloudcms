@@ -22,20 +22,20 @@ func (s *Service) Sync(ctx context.Context, req *worker.SyncRequest) (*worker.Sy
 
 	// Call Create, Update or Delete service based on Operation
 	switch req.Operation {
-	case "create":
+	case api.CreateOp:
 		createReq := api.CreateRequest{
 			Type:    req.Type,
 			Content: content,
 		}
 		resp, _ = s.Create(ctx, &createReq, true)
-	case "update":
+	case api.UpdateOp:
 		updateReq := api.UpdateRequest{
 			Type:    req.Type,
 			Slug:    req.Slug,
 			Content: content,
 		}
 		resp, _ = s.Update(ctx, &updateReq, true)
-	case "delete":
+	case api.DeleteOp:
 		deleteReq := api.DeleteRequest{
 			Type: req.Type,
 			Slug: req.Slug,

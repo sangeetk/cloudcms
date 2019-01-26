@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -94,6 +95,24 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		}
 
 		// Add the request to LOG bucket
+		l := tx.Bucket([]byte("log"))
+		seq, err := l.NextSequence()
+		if err != nil {
+			return err
+		}
+		event := api.Event{Seq: seq, Op: api.CreateOp, Request: req}
+		e, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+
+		var key = make([]byte, 8)
+		binary.LittleEndian.PutUint64(key, seq)
+		err = l.Put(key, e)
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {

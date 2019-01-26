@@ -24,8 +24,8 @@ func Run() {
 
 	flag.StringVar(&host, "host", "localhost", "The local hostname/IP address")
 	flag.IntVar(&port, "port", 8080, "The local port number")
-	flag.StringVar(&dbFile, "dbFile", "cloudcms.db", "The database filename")
-	flag.StringVar(&syncFile, "syncFile", "cloudcms.sync", "The workers database filename")
+	flag.StringVar(&dbFile, "dbFile", "db/cloudcms.db", "The database filename")
+	flag.StringVar(&syncFile, "syncFile", "db/cloudcms.sync", "The workers database filename")
 
 	flag.Parse()
 

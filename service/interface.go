@@ -11,6 +11,7 @@ import (
 
 // Interface definition
 type Interface interface {
+	// Normal DB operations
 	Create(context.Context, *api.CreateRequest, bool) (*api.Response, error)
 	Read(context.Context, *api.ReadRequest) (*api.Response, error)
 	Update(context.Context, *api.UpdateRequest, bool) (*api.Response, error)

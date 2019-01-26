@@ -2,15 +2,15 @@ package api
 
 // Event corresponds to a single creat, update or delete request
 type Event struct {
-	SeqNum  int64       `json:"seq_num"`
+	Seq     uint64      `json:"seq"`
 	Op      string      `json:"op"`
 	Request interface{} `json:"request"`
 }
 
 // PullRequest structure
 type PullRequest struct {
-	SeqnNum int64 `json:"seq_num"`
-	Count   int64 `json:"count"`
+	Seq   uint64 `json:"seq"` // Sends the next seq number
+	Count uint64 `json:"count"`
 }
 
 // PullResponse structure

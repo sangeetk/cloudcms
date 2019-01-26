@@ -34,13 +34,13 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 				return err
 			}
 		}
-		return nil
+		_, err := tx.CreateBucketIfNotExists([]byte("log"))
+		return err
 	})
+	db.Close()
 	if err != nil {
-		db.Close()
 		return err
 	}
-	db.Close()
 
 	// Create databse if it doesn't exist.
 	syncDB, err = bolt.Open(SyncFile, 0644, nil)

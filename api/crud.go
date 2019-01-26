@@ -1,14 +1,14 @@
 package api
 
 const (
-	// Create opration
-	Create = "create"
-	// Read operation
-	Read = "read"
-	// Update operation
-	Update = "update"
-	// Delete operation
-	Delete = "delete"
+	// CreateOp opration
+	CreateOp = "create"
+	// ReadOp operation
+	ReadOp = "read"
+	// UpdateOp operation
+	UpdateOp = "update"
+	// DeleteOp operation
+	DeleteOp = "delete"
 )
 
 // CreateRequest structure

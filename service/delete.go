@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -79,6 +80,23 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 		}
 
 		// Add the request to LOG bucket
+		l := tx.Bucket([]byte("log"))
+		seq, err := l.NextSequence()
+		if err != nil {
+			return err
+		}
+		event := api.Event{Seq: seq, Op: api.DeleteOp, Request: req}
+		e, err := json.Marshal(event)
+		if err != nil {
+			return err
+		}
+
+		var key = make([]byte, 8)
+		binary.LittleEndian.PutUint64(key, seq)
+		err = l.Put(key, e)
+		if err != nil {
+			return err
+		}
 
 		return nil
 	})

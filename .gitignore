@@ -1,8 +1,3 @@
 cloudcms
-*.db
-*.sync
-*.index
-*.sh
+main/db/
 main/main
-main/*.sync
-main/*.db
