@@ -67,6 +67,11 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		item["updated_at"] = time.Now().Unix()
 		item["deleted_at"] = 0
 
+		// Assign empty status if not provided
+		if _, ok := item["status"]; !ok {
+			item["status"] = ""
+		}
+
 		newSlug := slug
 		var i int
 		// Find a unique slug

@@ -11,7 +11,7 @@ import (
 	"github.com/urantiatech/kit/endpoint"
 )
 
-// Search - creates a single item
+// Search - searches for query
 func (s *Service) Search(ctx context.Context, req *api.SearchRequest) (*api.SearchResults, error) {
 	var resp = api.SearchResults{Type: req.Type}
 	var searchRequest *bleve.SearchRequest

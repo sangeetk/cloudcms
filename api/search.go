@@ -8,6 +8,7 @@ import (
 type SearchRequest struct {
 	Type      string    `json:"type"`
 	Query     string    `json:"query"`
+	Status    string    `json:"status"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	Limit     int       `json:"limit"`

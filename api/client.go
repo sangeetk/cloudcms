@@ -103,7 +103,7 @@ func Search(contentType, query string, startDate, endDate time.Time, limit, skip
 		log.Fatal(err.Error())
 	}
 
-	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeSearchResults).Endpoint()
 	req := SearchRequest{
 		Type:      contentType,
 		Query:     query,
@@ -121,6 +121,33 @@ func Search(contentType, query string, startDate, endDate time.Time, limit, skip
 	}
 	r := resp.(SearchResults)
 	return r.Results, r.Total, r.Limit, r.Skip, nil
+}
+
+// List - list all items
+func List(contentType, status string, limit, skip int, dns string) (
+	[]interface{}, int, int, int, error) {
+	ctx := context.Background()
+	tgt, err := url.Parse("http://" + dns + "/list")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeListResults).Endpoint()
+	req := ListRequest{
+		Type:   contentType,
+		Status: status,
+		Limit:  limit,
+		Skip:   skip,
+	}
+	resp, err := endPoint(ctx, req)
+	if err != nil {
+		return nil, 0, 0, 0, err
+	}
+	if resp.(ListResults).Err != "" {
+		return nil, 0, 0, 0, errors.New(resp.(ListResults).Err)
+	}
+	r := resp.(ListResults)
+	return r.List, r.Total, r.Limit, r.Skip, nil
 }
 
 // EncodeRequest encodes the request as JSON
@@ -142,8 +169,18 @@ func DecodeResponse(ctx context.Context, r *http.Response) (interface{}, error) 
 	return response, nil
 }
 
-func decodeSearchResults(ctx context.Context, r *http.Response) (interface{}, error) {
+// DecodeSearchResults decodes search results
+func DecodeSearchResults(ctx context.Context, r *http.Response) (interface{}, error) {
 	var results SearchResults
+	if err := json.NewDecoder(r.Body).Decode(&results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// DecodeListResults decodes list results
+func DecodeListResults(ctx context.Context, r *http.Response) (interface{}, error) {
+	var results ListResults
 	if err := json.NewDecoder(r.Body).Decode(&results); err != nil {
 		return nil, err
 	}

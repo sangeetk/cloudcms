@@ -17,6 +17,7 @@ type Interface interface {
 	Update(context.Context, *api.UpdateRequest, bool) (*api.Response, error)
 	Delete(context.Context, *api.DeleteRequest, bool) (*api.Response, error)
 	Search(context.Context, *api.SearchRequest) (*api.SearchResults, error)
+	List(context.Context, *api.ListRequest) (*api.ListResults, error)
 
 	// Schema request from admin interface
 	Schema(context.Context, *api.SchemaRequest) (*api.SchemaResponse, error)
