@@ -22,7 +22,7 @@ const (
 // Header contains some common header fields for content type
 type Header struct {
 	ID        uint64 `json:"id"`
-	Title     string `json:"title"`
+	Language  string `json:"language"`
 	Slug      string `json:"slug"`
 	Status    string `json:"status"`
 	CreatedAt int64  `json:"created_at"`

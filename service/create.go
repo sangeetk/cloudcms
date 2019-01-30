@@ -60,8 +60,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 
 		var item = (req.Content).(map[string]interface{})
 		item["id"] = nextSeq
-		title := item["title"].(string)
-		slug := stringToSlug(title)
+		slug := stringToSlug(item["slug"].(string))
 		item["slug"] = slug
 		item["created_at"] = time.Now().Unix()
 		item["updated_at"] = time.Now().Unix()
