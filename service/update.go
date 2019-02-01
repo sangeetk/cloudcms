@@ -50,13 +50,9 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(req.Type))
-		if b == nil {
-			return api.ErrorNotFound
-		}
-		bb := b.Bucket([]byte(req.Language))
-		if bb == nil {
-			return api.ErrorNotFound
+		bb, err := getBucket(tx, req.Type, req.Language)
+		if err != nil {
+			return err
 		}
 
 		var content map[string]interface{}

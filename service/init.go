@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
@@ -9,7 +10,6 @@ import (
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
-	"golang.org/x/text/language"
 )
 
 // Initialize function
@@ -30,10 +30,33 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
 		for t := range item.Types {
-			_, err := tx.CreateBucketIfNotExists([]byte(t))
+			// Create bucket for content type
+			b, err := tx.CreateBucketIfNotExists([]byte(t))
 			if err != nil {
 				return err
 			}
+
+			// Create in-memory index for content type
+			if _, ok := Index[t]; !ok {
+				Index[t] = make(map[string]bleve.Index)
+			}
+
+			for _, l := range Languages {
+				// Create nested bucket for each supported language
+				_, err := b.CreateBucketIfNotExists([]byte(l.String()))
+				if err != nil {
+					return err
+				}
+				// Create in-memory index for each supported language
+				if _, ok := Index[t][l.String()]; !ok {
+					mapping := bleve.NewIndexMapping()
+					Index[t][l.String()], err = bleve.NewMemOnly(mapping)
+					if err != nil {
+						return err
+					}
+				}
+			}
+
 		}
 		_, err := tx.CreateBucketIfNotExists([]byte("log"))
 		return err
@@ -67,71 +90,79 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 	}
 	syncDB.Close()
 
-	// Open database again in read-only mode to allow multipe readers
+	return nil
+}
+
+func RebuildIndex() error {
+	// Open database in read-only mode to allow multipe readers
 	options := bolt.Options{ReadOnly: true}
-	db, err = bolt.Open(DBFile, 0644, &options)
+	db, err := bolt.Open(DBFile, 0644, &options)
 	if err != nil {
 		return err
 	}
 	defer db.Close()
 
-	// Initialize index for all Content Types
-	for contentType := range item.Types {
+	// Rebuild index for all Content Types
+	for t := range item.Types {
 		// Index all available items
-		// Access data from within a read-only transactional block.
 		if err := db.View(func(tx *bolt.Tx) error {
-			c := tx.Bucket([]byte(contentType)).Cursor()
-			if c == nil {
-				return nil
-			}
-			// Iterate over the cursor and index the value
-			for k, v := c.First(); k != nil; k, v = c.Next() {
-				var resp api.Response
-				slug := string(k[:])
-				err = json.Unmarshal(v, &resp.Content)
+			// Load all content of all supported languages
+			for _, l := range Languages {
+				bb, err := getBucket(tx, t, l.String())
 				if err != nil {
 					return err
 				}
+				c := bb.Cursor()
+				if c == nil {
+					return errors.New("Unknown Error")
+				}
+				// Iterate over the cursor and index the value
+				for k, v := c.First(); k != nil; k, v = c.Next() {
+					var resp api.Response
+					slug := string(k[:])
+					err = json.Unmarshal(v, &resp.Content)
+					if err != nil {
+						return err
+					}
 
-				var index bleve.Index
-				var err error
-				index, err = getIndex(contentType, resp.Language)
-				if err != nil {
-					return err
-				}
-				err = index.Index(slug, resp.Content)
-				if err != nil {
-					return err
+					index, err := getIndex(t, l.String())
+					if err != nil {
+						return err
+					}
+					item := resp.Content.(map[string]interface{})
+					err = index.Index(slug, item)
+					if err != nil {
+						return err
+					}
 				}
 			}
+
 			return nil
 		}); err != nil {
 			log.Fatal(err)
 		}
-
-		// Initialize index for the given contentType for English
-		if _, err := getIndex(contentType, language.English.String()); err != nil {
-			return err
-		}
-
 	}
-
 	return nil
 }
 
-func getIndex(contentType, language string) (bleve.Index, error) {
-	var err error
-	// Create index for content type if not exists
-	if _, ok := Index[contentType]; !ok {
-		Index[contentType] = make(map[string]bleve.Index)
+func getBucket(tx *bolt.Tx, contentType, language string) (*bolt.Bucket, error) {
+	b := tx.Bucket([]byte(contentType))
+	if b == nil {
+		return nil, errors.New("Invalid content type")
 	}
+	bb := b.Bucket([]byte(language))
+	if bb == nil {
+		return nil, errors.New("Unsupported language")
+	}
+	return bb, nil
+}
 
+func getIndex(contentType, language string) (bleve.Index, error) {
+	if _, ok := Index[contentType]; !ok {
+		return nil, errors.New("Invalid content type")
+	}
 	if _, ok := Index[contentType][language]; !ok {
-		mapping := bleve.NewIndexMapping()
-		Index[contentType][language], err = bleve.NewMemOnly(mapping)
-		if err != nil {
-			return nil, err
-		}
+		return nil, errors.New("Unsupported Language")
 	}
 	return Index[contentType][language], nil
 }

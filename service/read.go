@@ -26,6 +26,10 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 	if err == nil && r.Err == "" {
 		return r, nil
 	}
+	////////////////////////////////////////
+	resp.Err = r.Err
+	return &resp, nil
+	////////////////////////////////////////
 
 	// Open database in read-only mode
 	// It will be created if it doesn't exist.
@@ -38,16 +42,16 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 	defer db.Close()
 
 	err = db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(req.Type))
-		if b == nil {
-			return api.ErrorNotFound
+		bb, err := getBucket(tx, req.Type, req.Language)
+		if err != nil {
+			return err
 		}
-		val := b.Get([]byte(req.Slug))
+		val := bb.Get([]byte(req.Slug))
 		if val == nil {
 			return api.ErrorNotFound
 		}
 
-		err := json.Unmarshal(val, &resp.Content)
+		err = json.Unmarshal(val, &resp.Content)
 		if err != nil {
 			return err
 		}

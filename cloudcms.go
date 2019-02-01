@@ -12,7 +12,13 @@ import (
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/gorilla/mux"
 	h "github.com/urantiatech/kit/transport/http"
+	"golang.org/x/text/language"
 )
+
+// Languages supported
+func Languages(languages []language.Tag) {
+	s.Languages = languages
+}
 
 // Run method should be called from main function
 func Run() {
@@ -45,6 +51,10 @@ func Run() {
 	if err := s.Initialize(dbFile, syncFile, &localworker); err != nil {
 		log.Fatal(err.Error())
 	}
+	if err := s.RebuildIndex(); err != nil {
+		log.Fatal(err.Error())
+	}
+
 	var svc s.Service
 	svc = s.Service{}
 

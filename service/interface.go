@@ -7,7 +7,11 @@ import (
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
+	"golang.org/x/text/language"
 )
+
+// Languages supported
+var Languages []language.Tag
 
 // Interface definition
 type Interface interface {

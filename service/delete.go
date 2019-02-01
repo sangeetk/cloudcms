@@ -57,13 +57,9 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(req.Type))
-		if b == nil {
-			return api.ErrorNotFound
-		}
-		bb := b.Bucket([]byte(req.Language))
-		if bb == nil {
-			return api.ErrorNotFound
+		bb, err := getBucket(tx, req.Type, req.Language)
+		if err != nil {
+			return err
 		}
 
 		// Get the existing value
@@ -72,7 +68,7 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 			return api.ErrorNotFound
 		}
 
-		err := json.Unmarshal(val, &resp.Content)
+		err = json.Unmarshal(val, &resp.Content)
 		if err != nil {
 			return err
 		}

@@ -58,11 +58,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 	defer db.Close()
 
 	err = db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(req.Type))
-		if b == nil {
-			return api.ErrorInvalidContentType
-		}
-		bb, err := b.CreateBucketIfNotExists([]byte(req.Language))
+		bb, err := getBucket(tx, req.Type, req.Language)
 		if err != nil {
 			return err
 		}
