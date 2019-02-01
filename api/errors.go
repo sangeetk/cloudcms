@@ -7,6 +7,9 @@ import (
 // ErrorNotFound - 404 Not Found
 var ErrorNotFound = errors.New("Not Found")
 
+// ErrorNullContent - Content Not Found
+var ErrorNullContent = errors.New("Null Content")
+
 // ErrorInvalidContentType -
 var ErrorInvalidContentType = errors.New("Invalid ContentType")
 

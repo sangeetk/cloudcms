@@ -1,5 +1,9 @@
 package item
 
+import (
+	"golang.org/x/text/language"
+)
+
 const (
 	// WidgetInput is input field
 	WidgetInput = "input"
@@ -40,6 +44,9 @@ type Field struct {
 	Editable bool        `json:"editable"`
 }
 
+// Languages keep mapping between Types & Languages
+var Languages map[string]language.Tag
+
 // Types is a map used to reference a type name to its actual Editable type
 // mainly for lookups in /admin route based utilities
 var Types map[string]func() interface{}
@@ -50,7 +57,7 @@ var Fields map[string][]Field
 // HeaderFields -
 var HeaderFields = []Field{
 	{Name: "ID", Type: "integer", Label: "ID", Widget: WidgetInput, Value: "", Editable: false},
-	{Name: "Title", Type: "string", Label: "Enter the Title here", Widget: WidgetInput, Value: "", Editable: true},
+	{Name: "Language", Type: "string", Label: "Enter the Language here", Widget: WidgetInput, Value: "", Editable: true},
 	{Name: "Slug", Type: "string", Label: "Slug", Widget: WidgetInput, Value: "", Editable: false},
 	{Name: "Status", Type: "string", Label: "Status", Widget: WidgetInput, Value: "", Editable: true},
 	{Name: "CreatedAt", Type: "date", Label: "Created At", Widget: WidgetInput, Value: "", Editable: false},
@@ -59,6 +66,7 @@ var HeaderFields = []Field{
 }
 
 func init() {
+	Languages = make(map[string]language.Tag)
 	Types = make(map[string]func() interface{})
 	Fields = make(map[string][]Field)
 }

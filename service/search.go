@@ -43,7 +43,12 @@ func (s *Service) Search(ctx context.Context, req *api.SearchRequest) (*api.Sear
 	}
 	searchRequest.From = req.Skip
 
-	searchResult, err := Index[req.Type].Search(searchRequest)
+	index, err := getIndex(req.Type, req.Language)
+	if err != nil {
+		resp.Err = api.ErrorNotFound.Error()
+		return &resp, nil
+	}
+	searchResult, err := index.Search(searchRequest)
 	if err != nil {
 		resp.Err = api.ErrorNotFound.Error()
 		return &resp, nil

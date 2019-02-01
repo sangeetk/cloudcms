@@ -16,7 +16,7 @@ import (
 
 // Delete - creates a single item
 func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool) (*api.Response, error) {
-	var resp = api.Response{Type: req.Type}
+	var resp = api.Response{Type: req.Type, Language: req.Language}
 	var db *bolt.DB
 	var err error
 
@@ -28,13 +28,17 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 	// Update request as sync msg contains full information
 	// Simply index the content and return
 	if sync {
-		readReq := api.ReadRequest{Type: req.Type, Slug: req.Slug}
+		readReq := api.ReadRequest{Type: req.Type, Language: req.Language, Slug: req.Slug}
 		item, err := s.Read(ctx, &readReq)
 		if err != nil {
 			resp.Err = api.ErrorNotFound.Error()
 			return &resp, nil
 		}
-		err = Index[req.Type].Delete(req.Slug)
+		index, err := getIndex(req.Type, req.Language)
+		if err != nil {
+			return &resp, nil
+		}
+		err = index.Delete(req.Slug)
 		if err != nil {
 			return &resp, nil
 		}
@@ -57,9 +61,13 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 		if b == nil {
 			return api.ErrorNotFound
 		}
+		bb := b.Bucket([]byte(req.Language))
+		if bb == nil {
+			return api.ErrorNotFound
+		}
 
 		// Get the existing value
-		val := b.Get([]byte(req.Slug))
+		val := bb.Get([]byte(req.Slug))
 		if val == nil {
 			return api.ErrorNotFound
 		}
@@ -69,12 +77,16 @@ func (s *Service) Delete(ctx context.Context, req *api.DeleteRequest, sync bool)
 			return err
 		}
 
-		err = b.Delete([]byte(req.Slug))
+		err = bb.Delete([]byte(req.Slug))
 		if err != nil {
 			return err
 		}
 
-		err = Index[req.Type].Delete(req.Slug)
+		index, err := getIndex(req.Type, req.Language)
+		if err != nil {
+			return err
+		}
+		err = index.Delete(req.Slug)
 		if err != nil {
 			return err
 		}

@@ -12,7 +12,7 @@ import (
 
 // List - list all items
 func (s *Service) List(ctx context.Context, req *api.ListRequest) (*api.ListResults, error) {
-	var resp = api.ListResults{Type: req.Type}
+	var resp = api.ListResults{Type: req.Type, Language: req.Language}
 	var searchRequest *bleve.SearchRequest
 
 	if _, ok := Index[req.Type]; !ok {
@@ -32,7 +32,12 @@ func (s *Service) List(ctx context.Context, req *api.ListRequest) (*api.ListResu
 	}
 	searchRequest.From = req.Skip
 
-	searchResult, err := Index[req.Type].Search(searchRequest)
+	index, err := getIndex(req.Type, req.Language)
+	if err != nil {
+		resp.Err = api.ErrorNotFound.Error()
+		return &resp, nil
+	}
+	searchResult, err := index.Search(searchRequest)
 	if err != nil {
 		resp.Err = api.ErrorNotFound.Error()
 		return &resp, nil

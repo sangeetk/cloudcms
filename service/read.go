@@ -13,7 +13,7 @@ import (
 
 // Read - returns a single item
 func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response, error) {
-	var resp = api.Response{Type: req.Type}
+	var resp = api.Response{Type: req.Type, Language: req.Language}
 	var db *bolt.DB
 
 	if _, ok := Index[req.Type]; !ok {
@@ -62,7 +62,7 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 
 // ReadFromIndex - returns a single item from index
 func (s *Service) ReadFromIndex(ctx context.Context, req *api.ReadRequest) (*api.Response, error) {
-	var resp = api.Response{Type: req.Type}
+	var resp = api.Response{Type: req.Type, Language: req.Language}
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = "Invalid content type"
@@ -76,7 +76,12 @@ func (s *Service) ReadFromIndex(ctx context.Context, req *api.ReadRequest) (*api
 	searchRequest.From = 0
 
 	for {
-		searchResult, err := Index[req.Type].Search(searchRequest)
+		index, err := getIndex(req.Type, req.Language)
+		if err != nil {
+			resp.Err = api.ErrorNotFound.Error()
+			return &resp, nil
+		}
+		searchResult, err := index.Search(searchRequest)
 		if err != nil {
 			resp.Err = api.ErrorNotFound.Error()
 			return &resp, nil

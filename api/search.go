@@ -7,6 +7,7 @@ import (
 // SearchRequest - search request
 type SearchRequest struct {
 	Type      string    `json:"type"`
+	Language  string    `json:"language"`
 	Query     string    `json:"query"`
 	Status    string    `json:"status"`
 	StartDate time.Time `json:"start_date"`

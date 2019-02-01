@@ -9,6 +9,7 @@ import (
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
+	"golang.org/x/text/language"
 )
 
 // Initialize function
@@ -20,7 +21,7 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 	SyncFile = syncFile
 	LocalWorker = local
 
-	Index = make(map[string]bleve.Index)
+	Index = make(map[string]map[string]bleve.Index)
 
 	// Create databse if it doesn't exist.
 	db, err = bolt.Open(DBFile, 0644, nil)
@@ -76,13 +77,6 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 
 	// Initialize index for all Content Types
 	for contentType := range item.Types {
-		// Create index
-		mapping := bleve.NewIndexMapping()
-		Index[contentType], err = bleve.NewMemOnly(mapping)
-		if err != nil {
-			return err
-		}
-
 		// Index all available items
 		// Access data from within a read-only transactional block.
 		if err := db.View(func(tx *bolt.Tx) error {
@@ -98,7 +92,14 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 				if err != nil {
 					return err
 				}
-				err = Index[contentType].Index(slug, resp.Content)
+
+				var index bleve.Index
+				var err error
+				index, err = getIndex(contentType, resp.Language)
+				if err != nil {
+					return err
+				}
+				err = index.Index(slug, resp.Content)
 				if err != nil {
 					return err
 				}
@@ -107,7 +108,30 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 		}); err != nil {
 			log.Fatal(err)
 		}
+
+		// Initialize index for the given contentType for English
+		if _, err := getIndex(contentType, language.English.String()); err != nil {
+			return err
+		}
+
 	}
 
 	return nil
+}
+
+func getIndex(contentType, language string) (bleve.Index, error) {
+	var err error
+	// Create index for content type if not exists
+	if _, ok := Index[contentType]; !ok {
+		Index[contentType] = make(map[string]bleve.Index)
+	}
+
+	if _, ok := Index[contentType][language]; !ok {
+		mapping := bleve.NewIndexMapping()
+		Index[contentType][language], err = bleve.NewMemOnly(mapping)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return Index[contentType][language], nil
 }

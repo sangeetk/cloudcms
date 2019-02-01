@@ -16,7 +16,7 @@ import (
 
 // Update - creates a single item
 func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool) (*api.Response, error) {
-	var resp = api.Response{Type: req.Type}
+	var resp = api.Response{Type: req.Type, Language: req.Language}
 	var db *bolt.DB
 	var err error
 
@@ -28,7 +28,12 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 	// Update request as sync msg contains full information
 	// Simply update the index the content and return
 	if sync {
-		err = Index[req.Type].Index(req.Slug, req.Content)
+		index, err := getIndex(req.Type, req.Language)
+		if err != nil {
+			return &resp, nil
+		}
+
+		err = index.Index(req.Slug, req.Content)
 		if err != nil {
 			return &resp, nil
 		}
@@ -49,19 +54,26 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 		if b == nil {
 			return api.ErrorNotFound
 		}
+		bb := b.Bucket([]byte(req.Language))
+		if bb == nil {
+			return api.ErrorNotFound
+		}
 
 		var content map[string]interface{}
 		// Get the existing value
-		val := b.Get([]byte(req.Slug))
+		val := bb.Get([]byte(req.Slug))
 		if val == nil {
 			return api.ErrorNotFound
 		}
-		err := json.Unmarshal(val, &content)
+		err = json.Unmarshal(val, &content)
 		if err != nil {
 			return err
 		}
 
 		// Update values
+		if req.Content == nil {
+			return api.ErrorNullContent
+		}
 		var fields = (req.Content).(map[string]interface{})
 		for k, v := range fields {
 			content[k] = v
@@ -73,14 +85,18 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(req.Slug), j)
+		err = bb.Put([]byte(req.Slug), j)
 		if err != nil {
 			return err
 		}
 
 		resp.Content = content
 
-		err = Index[req.Type].Index(req.Slug, content)
+		index, err := getIndex(req.Type, req.Language)
+		if err != nil {
+			return err
+		}
+		err = index.Index(req.Slug, content)
 		if err != nil {
 			return err
 		}

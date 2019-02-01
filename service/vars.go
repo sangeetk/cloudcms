@@ -17,5 +17,5 @@ var LocalWorker *worker.Worker
 // DefaultBucket name
 const DefaultBucket = "default"
 
-// Index Map
-var Index map[string]bleve.Index
+// Index map[ContentType]map[Language]bleve.Index
+var Index map[string]map[string]bleve.Index

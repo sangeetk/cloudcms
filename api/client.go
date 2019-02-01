@@ -15,7 +15,7 @@ import (
 )
 
 // Create - creates a new item
-func Create(contentType string, content interface{}, dns string) (interface{}, error) {
+func Create(contentType, language, slug string, content interface{}, dns string) (interface{}, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/create")
 	if err != nil {
@@ -23,7 +23,7 @@ func Create(contentType string, content interface{}, dns string) (interface{}, e
 	}
 
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
-	req := CreateRequest{Type: contentType, Content: content}
+	req := CreateRequest{Type: contentType, Language: language, Slug: slug, Content: content}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func Create(contentType string, content interface{}, dns string) (interface{}, e
 }
 
 // Read - retreives an item from the DB
-func Read(contentType, slug string, dns string) (interface{}, error) {
+func Read(contentType, language, slug string, dns string) (interface{}, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/read")
 	if err != nil {
@@ -43,7 +43,7 @@ func Read(contentType, slug string, dns string) (interface{}, error) {
 	}
 
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
-	req := ReadRequest{Type: contentType, Slug: slug}
+	req := ReadRequest{Type: contentType, Language: language, Slug: slug}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func Read(contentType, slug string, dns string) (interface{}, error) {
 }
 
 // Update - updated an existing item
-func Update(contentType, slug string, content interface{}, dns string) (interface{}, error) {
+func Update(contentType, language, slug string, content interface{}, dns string) (interface{}, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/update")
 	if err != nil {
@@ -63,7 +63,7 @@ func Update(contentType, slug string, content interface{}, dns string) (interfac
 	}
 
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
-	req := UpdateRequest{Type: contentType, Slug: slug, Content: content}
+	req := UpdateRequest{Type: contentType, Language: language, Slug: slug, Content: content}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
@@ -75,7 +75,7 @@ func Update(contentType, slug string, content interface{}, dns string) (interfac
 }
 
 // Delete - deletes an item from DB
-func Delete(contentType, slug string, dns string) (interface{}, error) {
+func Delete(contentType, language, slug string, dns string) (interface{}, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/delete")
 	if err != nil {
@@ -83,7 +83,7 @@ func Delete(contentType, slug string, dns string) (interface{}, error) {
 	}
 
 	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeResponse).Endpoint()
-	req := DeleteRequest{Type: contentType, Slug: slug}
+	req := DeleteRequest{Type: contentType, Language: language, Slug: slug}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
@@ -95,7 +95,7 @@ func Delete(contentType, slug string, dns string) (interface{}, error) {
 }
 
 // Search - searches for query
-func Search(contentType, query string, startDate, endDate time.Time, limit, skip int, dns string) (
+func Search(contentType, language, query string, startDate, endDate time.Time, limit, skip int, dns string) (
 	[]interface{}, int, int, int, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/search")
@@ -124,7 +124,7 @@ func Search(contentType, query string, startDate, endDate time.Time, limit, skip
 }
 
 // List - list all items
-func List(contentType, status string, limit, skip int, dns string) (
+func List(contentType, language, status string, limit, skip int, dns string) (
 	[]interface{}, int, int, int, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/list")

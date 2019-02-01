@@ -11,16 +11,22 @@ import (
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
+	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
 	"github.com/urantiatech/kit/endpoint"
+	"golang.org/x/text/language"
 )
 
 // Create - creates a single item
 func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool) (*api.Response, error) {
-	var resp = api.Response{Type: req.Type}
+	var resp = api.Response{Type: req.Type, Language: req.Language}
 	var db *bolt.DB
 	var err error
 
+	// Set the language code
+	if req.Language == "" {
+		req.Language = language.English.String()
+	}
 	// Validate the content type
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = api.ErrorInvalidContentType.Error()
@@ -31,7 +37,11 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 	if sync {
 		// Simply index the content and return
 		var item = (req.Content).(map[string]interface{})
-		err = Index[req.Type].Index(item["slug"].(string), item)
+		index, err := getIndex(req.Type, req.Language)
+		if err != nil {
+			return &resp, nil
+		}
+		err = index.Index(item["slug"].(string), item)
 		if err != nil {
 			return &resp, nil
 		}
@@ -52,15 +62,24 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		if b == nil {
 			return api.ErrorInvalidContentType
 		}
-
-		nextSeq, err := b.NextSequence()
+		bb, err := b.CreateBucketIfNotExists([]byte(req.Language))
 		if err != nil {
 			return err
 		}
 
+		nextSeq, err := bb.NextSequence()
+		if err != nil {
+			return err
+		}
+
+		if req.Content == nil {
+			return api.ErrorNullContent
+		}
+
 		var item = (req.Content).(map[string]interface{})
+		item["language"] = req.Language
 		item["id"] = nextSeq
-		slug := stringToSlug(item["slug"].(string))
+		slug := stringToSlug(req.Slug)
 		item["slug"] = slug
 		item["created_at"] = time.Now().Unix()
 		item["updated_at"] = time.Now().Unix()
@@ -74,7 +93,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		newSlug := slug
 		var i int
 		// Find a unique slug
-		for i = 2; b.Get([]byte(newSlug)) != nil; i++ {
+		for i = 2; bb.Get([]byte(newSlug)) != nil; i++ {
 			newSlug = fmt.Sprintf("%s-%d", slug, i)
 		}
 		if i > 2 {
@@ -85,7 +104,7 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(newSlug), j)
+		err = bb.Put([]byte(newSlug), j)
 		if err != nil {
 			return err
 		}
@@ -93,7 +112,12 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		resp.Content = item
 
 		// Create index
-		err = Index[req.Type].Index(newSlug, item)
+		var index bleve.Index
+		index, err = getIndex(req.Type, req.Language)
+		if err != nil {
+			return err
+		}
+		err = index.Index(newSlug, item)
 		if err != nil {
 			return err
 		}
