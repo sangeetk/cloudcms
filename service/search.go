@@ -54,12 +54,10 @@ func (s *Service) Search(ctx context.Context, req *api.SearchRequest) (*api.Sear
 		return &resp, nil
 	}
 
-	resp.Total = int(searchResult.Total)
-	resp.Limit = len(searchResult.Hits)
-	resp.Skip = req.Skip
+	resp.Total = searchResult.Total
 
 	for _, hit := range searchResult.Hits {
-		resp.Results = append(resp.Results, hit.Fields)
+		resp.Hits = append(resp.Hits, hit.Fields)
 	}
 
 	return &resp, nil

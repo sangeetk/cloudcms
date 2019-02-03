@@ -18,10 +18,11 @@ type SearchRequest struct {
 
 // SearchResults - search results
 type SearchResults struct {
-	Type    string        `json:"type"`
-	Results []interface{} `json:"results"`
-	Total   int           `json:"total"`
-	Limit   int           `json:"limit"`
-	Skip    int           `json:"skip"`
-	Err     string        `json:"err,omitempty"`
+	Type    string         `json:"type"`
+	Status  *SearchStatus  `json:"status"`
+	Request *SearchRequest `json:"request"`
+	Hits    []interface{}  `json:"hits"`
+	Total   uint64         `json:"total_hits"`
+	Took    time.Duration  `json:"took"`
+	Err     string         `json:"err,omitempty"`
 }

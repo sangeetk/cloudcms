@@ -64,6 +64,7 @@ func Run() {
 	r.Handle("/update", h.NewServer(s.UpdateEndpoint(svc), s.DecodeUpdateReq, s.Encode))
 	r.Handle("/delete", h.NewServer(s.DeleteEndpoint(svc), s.DecodeDeleteReq, s.Encode))
 	r.Handle("/search", h.NewServer(s.SearchEndpoint(svc), s.DecodeSearchReq, s.Encode))
+	r.Handle("/facets", h.NewServer(s.FacetsSearchEndpoint(svc), s.DecodeFacetsSearchReq, s.Encode))
 	r.Handle("/list", h.NewServer(s.ListEndpoint(svc), s.DecodeListReq, s.Encode))
 	r.Handle("/schema", h.NewServer(s.SchemaEndpoint(svc), s.DecodeSchemaReq, s.Encode))
 	r.Handle("/pull", h.NewServer(s.PullEndpoint(svc), s.DecodePullReq, s.Encode))

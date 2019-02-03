@@ -120,7 +120,30 @@ func Search(contentType, language, query string, startDate, endDate time.Time, l
 		return nil, 0, 0, 0, errors.New(resp.(SearchResults).Err)
 	}
 	r := resp.(SearchResults)
-	return r.Results, r.Total, r.Limit, r.Skip, nil
+	return r.Hits, int(r.Total), limit, skip, nil
+}
+
+// FacetsSearch - searches for query with multiple facets
+func FacetsSearch(contentType, language string, req *FacetsSearchRequest, dns string) (*FacetsSearchResults, error) {
+	ctx := context.Background()
+	tgt, err := url.Parse("http://" + dns + "/facets")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	endPoint := ht.NewClient("POST", tgt, EncodeRequest, DecodeFacetsSearchResults).Endpoint()
+	req.Type = contentType
+	req.Language = language
+
+	resp, err := endPoint(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	results := resp.(FacetsSearchResults)
+	if results.Err != "" {
+		return nil, errors.New(results.Err)
+	}
+	return &results, nil
 }
 
 // List - list all items
@@ -172,6 +195,15 @@ func DecodeResponse(ctx context.Context, r *http.Response) (interface{}, error) 
 // DecodeSearchResults decodes search results
 func DecodeSearchResults(ctx context.Context, r *http.Response) (interface{}, error) {
 	var results SearchResults
+	if err := json.NewDecoder(r.Body).Decode(&results); err != nil {
+		return nil, err
+	}
+	return results, nil
+}
+
+// DecodeFacetsSearchResults decodes facets search results
+func DecodeFacetsSearchResults(ctx context.Context, r *http.Response) (interface{}, error) {
+	var results FacetsSearchResults
 	if err := json.NewDecoder(r.Body).Decode(&results); err != nil {
 		return nil, err
 	}
