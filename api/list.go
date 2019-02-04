@@ -39,11 +39,12 @@ func List(contentType, language, status, sortby string, size, skip int, dns stri
 
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeListResults).Endpoint()
 	req := ListRequest{
-		Type:   contentType,
-		Status: status,
-		SortBy: sortby,
-		Size:   size,
-		Skip:   skip,
+		Type:     contentType,
+		Language: language,
+		Status:   status,
+		SortBy:   sortby,
+		Size:     size,
+		Skip:     skip,
 	}
 	resp, err := endPoint(ctx, req)
 	if err != nil {

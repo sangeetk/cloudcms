@@ -41,10 +41,12 @@ func Search(contentType, language, query string, fuzzy bool, size, skip int, dns
 
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeSearchResults).Endpoint()
 	req := SearchRequest{
-		Type:  contentType,
-		Query: query,
-		Size:  size,
-		Skip:  skip,
+		Type:     contentType,
+		Language: language,
+		Query:    query,
+		Fuzzy:    fuzzy,
+		Size:     size,
+		Skip:     skip,
 	}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
