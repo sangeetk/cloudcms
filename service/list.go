@@ -12,7 +12,7 @@ import (
 
 // List - list all items
 func (s *Service) List(ctx context.Context, req *api.ListRequest) (*api.ListResults, error) {
-	var resp = api.ListResults{Type: req.Type, Language: req.Language}
+	var resp = api.ListResults{Type: req.Type, Request: req}
 	var searchRequest *bleve.SearchRequest
 
 	if _, ok := Index[req.Type]; !ok {
@@ -20,13 +20,15 @@ func (s *Service) List(ctx context.Context, req *api.ListRequest) (*api.ListResu
 		return &resp, nil
 	}
 
-	stringQuery := bleve.NewMatchAllQuery()
-	searchRequest = bleve.NewSearchRequest(stringQuery)
-	searchRequest.SortBy([]string{"id"})
+	query := bleve.NewMatchAllQuery()
+	searchRequest = bleve.NewSearchRequest(query)
 
+	if req.SortBy == "" {
+		req.SortBy = "id"
+	}
+	searchRequest.SortBy([]string{req.SortBy})
 	searchRequest.Fields = []string{"*"}
-	searchRequest.Highlight = bleve.NewHighlight()
-	searchRequest.Size = req.Limit
+	searchRequest.Size = req.Size
 	if searchRequest.Size <= 0 {
 		searchRequest.Size = 10
 	}
@@ -43,9 +45,7 @@ func (s *Service) List(ctx context.Context, req *api.ListRequest) (*api.ListResu
 		return &resp, nil
 	}
 
-	resp.Total = int(searchResult.Total)
-	resp.Limit = len(searchResult.Hits)
-	resp.Skip = req.Skip
+	resp.Total = searchResult.Total
 
 	for _, hit := range searchResult.Hits {
 		resp.List = append(resp.List, hit.Fields)

@@ -4,40 +4,37 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"github.com/blevesearch/bleve"
+	q "github.com/blevesearch/bleve/search/query"
 	"github.com/urantiatech/kit/endpoint"
 )
 
 // Search - searches for query
 func (s *Service) Search(ctx context.Context, req *api.SearchRequest) (*api.SearchResults, error) {
-	var resp = api.SearchResults{Type: req.Type}
+	var resp = api.SearchResults{Type: req.Type, Request: req}
 	var searchRequest *bleve.SearchRequest
+	var query q.Query
 
 	if _, ok := Index[req.Type]; !ok {
 		resp.Err = api.ErrorInvalidContentType.Error()
 		return &resp, nil
 	}
 
-	// Add date-range if applicable
-	if !req.StartDate.IsZero() || !req.EndDate.IsZero() {
-		if req.EndDate.IsZero() {
-			req.EndDate = time.Now()
-		}
-		dateRangeQuery := bleve.NewDateRangeQuery(req.StartDate, req.EndDate)
-		stringQuery := bleve.NewQueryStringQuery(req.Query)
-		conjunctionQuery := bleve.NewConjunctionQuery(dateRangeQuery, stringQuery)
-		searchRequest = bleve.NewSearchRequest(conjunctionQuery)
+	if req.Query == "" {
+		query = bleve.NewMatchAllQuery()
+	} else if req.Fuzzy {
+		query = bleve.NewFuzzyQuery(req.Query)
 	} else {
-		stringQuery := bleve.NewQueryStringQuery(req.Query)
-		searchRequest = bleve.NewSearchRequest(stringQuery)
+		query = bleve.NewQueryStringQuery(req.Query)
 	}
 
+	// Create a new search request
+	searchRequest = bleve.NewSearchRequest(query)
 	searchRequest.Fields = []string{"*"}
 	searchRequest.Highlight = bleve.NewHighlight()
-	searchRequest.Size = req.Limit
+	searchRequest.Size = req.Size
 	if searchRequest.Size <= 0 {
 		searchRequest.Size = 10
 	}
@@ -55,6 +52,7 @@ func (s *Service) Search(ctx context.Context, req *api.SearchRequest) (*api.Sear
 	}
 
 	resp.Total = searchResult.Total
+	resp.Took = searchResult.Took
 
 	for _, hit := range searchResult.Hits {
 		resp.Hits = append(resp.Hits, hit.Fields)

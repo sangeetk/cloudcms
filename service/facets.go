@@ -25,6 +25,8 @@ func (s *Service) FacetsSearch(ctx context.Context, req *api.FacetsSearchRequest
 
 	if req.Query == "" {
 		query = bleve.NewMatchAllQuery()
+	} else if req.Fuzzy {
+		query = bleve.NewFuzzyQuery(req.Query)
 	} else {
 		query = bleve.NewQueryStringQuery(req.Query)
 	}
@@ -60,17 +62,68 @@ func (s *Service) FacetsSearch(ctx context.Context, req *api.FacetsSearchRequest
 		resp.Err = api.ErrorNotFound.Error()
 		return &resp, nil
 	}
-	searchResult, err := index.Search(searchRequest)
+	searchResults, err := index.Search(searchRequest)
 	if err != nil {
 		resp.Err = api.ErrorNotFound.Error()
 		return &resp, nil
 	}
 
-	resp.Total = searchResult.Total
+	// Create response structure
+	// Type    string               `json:"type"`
+	resp.Type = req.Type
 
-	// for _, hit := range searchResult.Hits {
-	//	resp.Hits = append(resp.Hits, hit.Fields)
-	// }
+	// Status  *SearchStatus        `json:"status"`
+	resp.Status = &api.SearchStatus{
+		Total:      searchResults.Status.Total,
+		Failed:     searchResults.Status.Failed,
+		Successful: searchResults.Status.Successful,
+	}
+
+	// Request *FacetsSearchRequest `json:"request"`
+	resp.Request = req
+
+	// Hits    []interface{}        `json:"hits"`
+	for _, hit := range searchResults.Hits {
+		resp.Hits = append(resp.Hits, hit.Fields)
+	}
+
+	// Total   uint64               `json:"total"`
+	resp.Total = searchResults.Total
+
+	// Took    time.Duration        `json:"took"`
+	resp.Took = searchResults.Took
+
+	// Facets  FacetResults         `json:"facets"`
+	resp.Facets = make(api.FacetResults)
+	for fname, fresult := range searchResults.Facets {
+		facetResult := api.FacetResult{
+			Field:   fresult.Field,
+			Total:   fresult.Total,
+			Missing: fresult.Total,
+			Other:   fresult.Other,
+		}
+
+		for t, tfacet := range fresult.Terms {
+			facetResult.Terms[t].Term = tfacet.Term
+			facetResult.Terms[t].Count = tfacet.Count
+		}
+
+		for n, nfacet := range fresult.NumericRanges {
+			facetResult.NumericRanges[n].Name = nfacet.Name
+			facetResult.NumericRanges[n].Min = nfacet.Min
+			facetResult.NumericRanges[n].Max = nfacet.Max
+			facetResult.NumericRanges[n].Count = nfacet.Count
+		}
+
+		for d, dfacet := range fresult.DateRanges {
+			facetResult.DateRanges[d].Name = dfacet.Name
+			facetResult.DateRanges[d].Start = dfacet.Start
+			facetResult.DateRanges[d].End = dfacet.End
+			facetResult.DateRanges[d].Count = dfacet.Count
+		}
+
+		resp.Facets[fname] = &facetResult
+	}
 
 	return &resp, nil
 }
