@@ -29,7 +29,7 @@ type ListResults struct {
 }
 
 // List - list all items
-func List(contentType, language, status string, size, skip int, dns string) (
+func List(contentType, language, status, sortby string, size, skip int, dns string) (
 	[]interface{}, uint64, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/list")
@@ -41,6 +41,7 @@ func List(contentType, language, status string, size, skip int, dns string) (
 	req := ListRequest{
 		Type:   contentType,
 		Status: status,
+		SortBy: sortby,
 		Size:   size,
 		Skip:   skip,
 	}

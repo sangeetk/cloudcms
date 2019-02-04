@@ -16,7 +16,6 @@ type SearchRequest struct {
 	Language string `json:"language"`
 	Query    string `json:"query"`
 	Fuzzy    bool   `json:fuzzy"`
-	Status   string `json:"status"`
 	Size     int    `json:"size"`
 	Skip     int    `json:"skip"`
 }
