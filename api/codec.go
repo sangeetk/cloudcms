@@ -53,3 +53,12 @@ func decodeListResults(ctx context.Context, r *http.Response) (interface{}, erro
 	}
 	return results, nil
 }
+
+// decodeSchemaResponse decodes the response from the schema request
+func decodeSchemaResponse(ctx context.Context, r *http.Response) (interface{}, error) {
+	var response SchemaResponse
+	if err := json.NewDecoder(r.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	return response, nil
+}

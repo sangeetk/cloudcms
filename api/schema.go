@@ -1,7 +1,13 @@
 package api
 
 import (
+	"context"
+	"errors"
+	"log"
+	"net/url"
+
 	"git.urantiatech.com/cloudcms/cloudcms/item"
+	ht "github.com/urantiatech/kit/transport/http"
 )
 
 // SchemaRequest - schema request
@@ -18,4 +24,24 @@ type ContentType struct {
 type SchemaResponse struct {
 	Schema map[string]ContentType `json:"schema,omitempty"`
 	Err    string                 `json:"err,omitempty"`
+}
+
+// Schema - fetches the info about content types
+func Schema(dns string) (map[string]ContentType, error) {
+	ctx := context.Background()
+	tgt, err := url.Parse("http://" + dns + "/schema")
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeSchemaResponse).Endpoint()
+	req := SchemaRequest{}
+	resp, err := endPoint(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.(SchemaResponse).Err != "" {
+		return nil, errors.New(resp.(SchemaResponse).Err)
+	}
+	return resp.(SchemaResponse).Schema, nil
 }
