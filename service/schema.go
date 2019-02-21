@@ -14,6 +14,10 @@ import (
 func (s *Service) Schema(ctx context.Context, req *api.SchemaRequest) (*api.SchemaResponse, error) {
 	var resp = api.SchemaResponse{Schema: make(map[string]api.ContentType)}
 
+	for _, l := range Languages {
+		resp.Languages = append(resp.Languages, l.String())
+	}
+
 	for t, v := range item.Fields {
 		contentType := api.ContentType{
 			Fields: v,

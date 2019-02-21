@@ -22,12 +22,13 @@ type ContentType struct {
 
 // SchemaResponse - schema response
 type SchemaResponse struct {
-	Schema map[string]ContentType `json:"schema,omitempty"`
-	Err    string                 `json:"err,omitempty"`
+	Languages []string               `json:"languages"`
+	Schema    map[string]ContentType `json:"schema,omitempty"`
+	Err       string                 `json:"err,omitempty"`
 }
 
 // Schema - fetches the info about content types
-func Schema(dns string) (map[string]ContentType, error) {
+func Schema(dns string) ([]string, map[string]ContentType, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/schema")
 	if err != nil {
@@ -38,10 +39,10 @@ func Schema(dns string) (map[string]ContentType, error) {
 	req := SchemaRequest{}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if resp.(SchemaResponse).Err != "" {
-		return nil, errors.New(resp.(SchemaResponse).Err)
+		return nil, nil, errors.New(resp.(SchemaResponse).Err)
 	}
-	return resp.(SchemaResponse).Schema, nil
+	return resp.(SchemaResponse).Languages, resp.(SchemaResponse).Schema, nil
 }
