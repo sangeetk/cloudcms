@@ -7,6 +7,8 @@ import (
 const (
 	// WidgetInput is input field
 	WidgetInput = "input"
+	// WidgetDate is date field
+	WidgetDate = "date"
 	// WidgetFile is file field
 	WidgetFile = "file"
 	// WidgetTextarea is textarea field
@@ -21,6 +23,8 @@ const (
 	WidgetSelect = "select"
 	// WidgetSelectMultiple is select field with multiple values
 	WidgetSelectMultiple = "selectmultiple"
+	// WidgetTags is tags field
+	WidgetTags = "tags"
 )
 
 // Header contains some common header fields for content type
@@ -36,12 +40,12 @@ type Header struct {
 
 // Field represent a single field of content type
 type Field struct {
-	Name     string      `json:"name"`
-	Type     string      `json:"type"`
-	Label    string      `json:"label"`
-	Widget   string      `json:"widget"`
-	Value    interface{} `json:"value"`
-	Editable bool        `json:"editable"`
+	Name       string      `json:"name"`
+	Widget     string      `json:"widget"`
+	Helptext   string      `json:"helptext"`
+	Value      interface{} `json:"value"`
+	Editable   bool        `json:"editable"`
+	UseForSlug bool        `json:"useforslug"`
 }
 
 // Languages keep mapping between Types & Languages
@@ -56,13 +60,15 @@ var Fields map[string][]Field
 
 // HeaderFields -
 var HeaderFields = []Field{
-	{Name: "ID", Type: "integer", Label: "ID", Widget: WidgetInput, Value: "", Editable: false},
-	{Name: "Language", Type: "string", Label: "Enter the Language here", Widget: WidgetInput, Value: "", Editable: true},
-	{Name: "Slug", Type: "string", Label: "Slug", Widget: WidgetInput, Value: "", Editable: false},
-	{Name: "Status", Type: "string", Label: "Status", Widget: WidgetInput, Value: "", Editable: true},
-	{Name: "CreatedAt", Type: "date", Label: "Created At", Widget: WidgetInput, Value: "", Editable: false},
-	{Name: "UpdatedAt", Type: "date", Label: "Updated At", Widget: WidgetInput, Value: "", Editable: false},
-	{Name: "DeletedAt", Type: "date", Label: "Deleted At", Widget: WidgetInput, Value: "", Editable: false},
+	/*
+		{Name: "ID", Widget: WidgetInput, Helptext: "ID", Value: "", Editable: false, UseForSlug: false},
+		{Name: "Language", Widget: WidgetInput, Helptext: "Enter the Language here", Value: "", Editable: true, UseForSlug: false},
+		{Name: "Slug", Widget: WidgetInput, Helptext: "Slug", Value: "", Editable: false, UseForSlug: false},
+		{Name: "Status", Helptext: "Status", Widget: WidgetInput, Value: "", Editable: true, UseForSlug: false},
+		{Name: "CreatedAt", Widget: WidgetInput, Helptext: "Created At", Value: "", Editable: false, UseForSlug: false},
+		{Name: "UpdatedAt", Widget: WidgetInput, Helptext: "Updated At", Value: "", Editable: false, UseForSlug: false},
+		{Name: "DeletedAt", Widget: WidgetInput, Helptext: "Deleted At", Value: "", Editable: false, UseForSlug: false},
+	*/
 }
 
 func init() {
