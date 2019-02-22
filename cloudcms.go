@@ -70,6 +70,8 @@ func Run() {
 	r.Handle("/pull", h.NewServer(s.PullEndpoint(svc), s.DecodePullReq, s.Encode))
 	r.Handle("/push", h.NewServer(s.PushEndpoint(svc), s.DecodePushReq, s.Encode))
 
+	r.PathPrefix("/drive/").Handler(http.StripPrefix("/drive/", http.FileServer(http.Dir("drive"))))
+
 	sync := mux.NewRouter()
 	sync.Handle("/sync", h.NewServer(s.SyncEndpoint(svc), s.DecodeSyncReq, s.Encode))
 	sync.Handle("/ping", h.NewServer(s.PingEndpoint(svc), s.DecodePingReq, s.Encode))
