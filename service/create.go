@@ -1,15 +1,20 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
+	i "git.urantiatech.com/cloudcms/cloudcms/item"
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
@@ -79,7 +84,45 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		item["slug"] = slug
 		item["created_at"] = time.Now().Unix()
 		item["updated_at"] = time.Now().Unix()
-		item["deleted_at"] = 0
+		item["deleted_at"] = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
+
+		// Copy file(s)
+		for k, v := range item {
+			if strings.HasPrefix(k, "file:") {
+				var file i.File
+
+				if b, err := json.Marshal(v); err != nil {
+					return err
+				} else if err := json.Unmarshal(b, &file); err != nil {
+					return err
+				}
+
+				file.URI = fmt.Sprintf("/drive/%s/%s/%d/%s", req.Type, req.Language, nextSeq, file.Name)
+
+				filemap := v.(map[string]interface{})
+				filemap["uri"] = file.URI
+				filemap["bytes"] = nil
+
+				// Create path
+				path := fmt.Sprintf("drive/%s/%s/%d", req.Type, req.Language, nextSeq)
+				if err := os.MkdirAll(path, os.ModeDir|os.ModePerm); err != nil {
+					return err
+				}
+
+				// Create file
+				dst, err := os.Create(path + "/" + file.Name)
+				if err != nil {
+					return err
+				}
+				defer dst.Close()
+
+				// Copy the uploaded file to the destination file
+				buff := bytes.NewBuffer(file.Bytes)
+				if _, err := io.Copy(dst, buff); err != nil {
+					return err
+				}
+			}
+		}
 
 		// Assign empty status if not provided
 		if _, ok := item["status"]; !ok {

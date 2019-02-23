@@ -1,14 +1,20 @@
 package service
 
 import (
+	"bytes"
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
+	"git.urantiatech.com/cloudcms/cloudcms/item"
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/boltdb/bolt"
 	"github.com/urantiatech/kit/endpoint"
@@ -70,9 +76,51 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 		if req.Content == nil {
 			return api.ErrorNullContent
 		}
+
 		var fields = (req.Content).(map[string]interface{})
 		for k, v := range fields {
+
+			// Update file
+			if strings.HasPrefix(k, "file:") {
+				var file item.File
+				id := int64(content["id"].(float64))
+
+				if b, err := json.Marshal(v); err != nil {
+					return err
+				} else if err := json.Unmarshal(b, &file); err != nil {
+					return err
+				}
+
+				file.URI = fmt.Sprintf("/drive/%s/%s/%d/%s", req.Type, req.Language, id, file.Name)
+
+				filemap := v.(map[string]interface{})
+				filemap["uri"] = file.URI
+				filemap["bytes"] = nil
+
+				// Create path
+				path := fmt.Sprintf("drive/%s/%s/%d", req.Type, req.Language, id)
+				if err := os.MkdirAll(path, os.ModeDir|os.ModePerm); err != nil {
+					return err
+				}
+
+				// Create file
+				dst, err := os.Create(path + "/" + file.Name)
+				if err != nil {
+					return err
+				}
+				defer dst.Close()
+
+				// Copy the uploaded file to the destination file
+				buff := bytes.NewBuffer(file.Bytes)
+				if _, err := io.Copy(dst, buff); err != nil {
+					return err
+				}
+
+			}
+
+			// Update field
 			content[k] = v
+
 		}
 		content["updated_at"] = time.Now().Unix()
 
