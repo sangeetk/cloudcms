@@ -9,7 +9,7 @@ type File struct {
 	Name  string `json:"name"`
 	URI   string `json:"uri"`
 	Size  int64  `json:"size"`
-	Bytes []byte `json:"bytes"`
+	Bytes []byte `json:"bytes,omitempty"`
 }
 
 // Write byte array from p to f.Bytes
