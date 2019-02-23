@@ -15,6 +15,10 @@ const (
 	WidgetTextarea = "textarea"
 	// WidgetRichtext is richtext editor field
 	WidgetRichtext = "richtext"
+	// WidgetTags is tags field
+	WidgetTags = "tags"
+
+/*
 	// WidgetCheckbox is checkbox field
 	WidgetCheckbox = "checkbox"
 	// WidgetRadio is radio field
@@ -23,8 +27,7 @@ const (
 	WidgetSelect = "select"
 	// WidgetSelectMultiple is select field with multiple values
 	WidgetSelectMultiple = "selectmultiple"
-	// WidgetTags is tags field
-	WidgetTags = "tags"
+*/
 )
 
 // Header contains some common header fields for content type

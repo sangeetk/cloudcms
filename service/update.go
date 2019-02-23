@@ -91,29 +91,32 @@ func (s *Service) Update(ctx context.Context, req *api.UpdateRequest, sync bool)
 					return err
 				}
 
-				file.URI = fmt.Sprintf("/drive/%s/%s/%d/%s", req.Type, req.Language, id, file.Name)
+				// Update only if new file was uploaded
+				if len(file.Bytes) > 0 {
+					file.URI = fmt.Sprintf("/drive/%s/%s/%d/%s", req.Type, req.Language, id, file.Name)
 
-				filemap := v.(map[string]interface{})
-				filemap["uri"] = file.URI
-				filemap["bytes"] = nil
+					filemap := v.(map[string]interface{})
+					filemap["uri"] = file.URI
+					filemap["bytes"] = nil
 
-				// Create path
-				path := fmt.Sprintf("drive/%s/%s/%d", req.Type, req.Language, id)
-				if err := os.MkdirAll(path, os.ModeDir|os.ModePerm); err != nil {
-					return err
-				}
+					// Create path
+					path := fmt.Sprintf("drive/%s/%s/%d", req.Type, req.Language, id)
+					if err := os.MkdirAll(path, os.ModeDir|os.ModePerm); err != nil {
+						return err
+					}
 
-				// Create file
-				dst, err := os.Create(path + "/" + file.Name)
-				if err != nil {
-					return err
-				}
-				defer dst.Close()
+					// Create file
+					dst, err := os.Create(path + "/" + file.Name)
+					if err != nil {
+						return err
+					}
+					defer dst.Close()
 
-				// Copy the uploaded file to the destination file
-				buff := bytes.NewBuffer(file.Bytes)
-				if _, err := io.Copy(dst, buff); err != nil {
-					return err
+					// Copy the uploaded file to the destination file
+					buff := bytes.NewBuffer(file.Bytes)
+					if _, err := io.Copy(dst, buff); err != nil {
+						return err
+					}
 				}
 
 			}
