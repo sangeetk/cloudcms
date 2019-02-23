@@ -97,29 +97,33 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 					return err
 				}
 
-				file.URI = fmt.Sprintf("/drive/%s/%s/%d/%s", req.Type, req.Language, nextSeq, file.Name)
+				if file.URI != "" {
+					// Use the existing file URI
+				} else {
+					file.URI = fmt.Sprintf("/drive/%s/%s/%d/%s", req.Type, req.Language, nextSeq, file.Name)
 
-				filemap := v.(map[string]interface{})
-				filemap["uri"] = file.URI
-				filemap["bytes"] = nil
+					filemap := v.(map[string]interface{})
+					filemap["uri"] = file.URI
+					filemap["bytes"] = nil
 
-				// Create path
-				path := fmt.Sprintf("drive/%s/%s/%d", req.Type, req.Language, nextSeq)
-				if err := os.MkdirAll(path, os.ModeDir|os.ModePerm); err != nil {
-					return err
-				}
+					// Create path
+					path := fmt.Sprintf("drive/%s/%s/%d", req.Type, req.Language, nextSeq)
+					if err := os.MkdirAll(path, os.ModeDir|os.ModePerm); err != nil {
+						return err
+					}
 
-				// Create file
-				dst, err := os.Create(path + "/" + file.Name)
-				if err != nil {
-					return err
-				}
-				defer dst.Close()
+					// Create file
+					dst, err := os.Create(path + "/" + file.Name)
+					if err != nil {
+						return err
+					}
+					defer dst.Close()
 
-				// Copy the uploaded file to the destination file
-				buff := bytes.NewBuffer(file.Bytes)
-				if _, err := io.Copy(dst, buff); err != nil {
-					return err
+					// Copy the uploaded file to the destination file
+					buff := bytes.NewBuffer(file.Bytes)
+					if _, err := io.Copy(dst, buff); err != nil {
+						return err
+					}
 				}
 			}
 		}
