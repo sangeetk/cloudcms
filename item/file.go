@@ -4,9 +4,23 @@ import (
 	"log"
 )
 
+const (
+	// FileImageType - .jpg, .png, .gif etc
+	FileImageType = "image"
+	// FileAudioType - .mp3, .wav etc
+	FileAudioType = "audio"
+	// FileVideoType - .mp4, .avi, .mpg, etc
+	FileVideoType = "video"
+	// FileDocumentType - .doc, .pdf, .docx, .txt etc
+	FileDocumentType = "document"
+	// FileOtherType - any other type of file
+	FileOtherType = "other"
+)
+
 // File fieldz
 type File struct {
 	Name  string `json:"name"`
+	Type  string `json:"type"`
 	URI   string `json:"uri"`
 	Size  int64  `json:"size"`
 	Bytes []byte `json:"bytes,omitempty"`

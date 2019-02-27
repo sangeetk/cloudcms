@@ -49,6 +49,7 @@ type Field struct {
 	Value      interface{} `json:"value"`
 	Editable   bool        `json:"editable"`
 	UseForSlug bool        `json:"useforslug"`
+	FileType   string      `json:"filetype"`
 }
 
 // Languages keep mapping between Types & Languages
