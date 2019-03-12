@@ -99,13 +99,13 @@ func (s *Service) FacetsSearch(ctx context.Context, req *api.FacetsSearchRequest
 		facetResult := api.FacetResult{
 			Field:   fresult.Field,
 			Total:   fresult.Total,
-			Missing: fresult.Total,
+			Missing: fresult.Missing,
 			Other:   fresult.Other,
 		}
 
-		for t, tfacet := range fresult.Terms {
-			facetResult.Terms[t].Term = tfacet.Term
-			facetResult.Terms[t].Count = tfacet.Count
+		for _, tfacet := range fresult.Terms {
+			tf := &api.TermFacet{Term: tfacet.Term, Count: tfacet.Count}
+			facetResult.Terms = append(facetResult.Terms, tf)
 		}
 
 		for n, nfacet := range fresult.NumericRanges {
