@@ -3,17 +3,26 @@ package service
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/search"
 	q "github.com/blevesearch/bleve/search/query"
 	"github.com/urantiatech/kit/endpoint"
 )
 
 // FacetsSearch - searches for query with multiple facets
 func (s *Service) FacetsSearch(ctx context.Context, req *api.FacetsSearchRequest) (*api.FacetsSearchResults, error) {
+
+	if j, err := json.Marshal(req); err == nil {
+		fmt.Println(string(j))
+	}
+
+	log.Printf("req.Query=[%s]\n", req.Query)
 	var resp = api.FacetsSearchResults{Type: req.Type}
 	var searchRequest *bleve.SearchRequest
 	var query q.Query
@@ -33,6 +42,10 @@ func (s *Service) FacetsSearch(ctx context.Context, req *api.FacetsSearchRequest
 
 	// Create a new search request
 	searchRequest = bleve.NewSearchRequest(query)
+	if req.Query == "" {
+		sf := &search.SortField{Field: "created_at", Desc: true}
+		searchRequest.SortByCustom(search.SortOrder{sf})
+	}
 
 	// Add each facet request to search
 	for fname, f := range req.Facets {
