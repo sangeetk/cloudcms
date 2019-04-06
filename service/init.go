@@ -49,7 +49,25 @@ func Initialize(dbFile, syncFile string, local *worker.Worker) error {
 				}
 				// Create in-memory index for each supported language
 				if _, ok := Index[t][l.String()]; !ok {
+					/*
+						languageMapping := bleve.NewTextFieldMapping()
+						languageMapping.Analyzer = l.String()
+
+						documentMapping := bleve.NewDocumentMapping()
+						documentMapping.AddFieldMappingsAt("title", languageMapping)
+						documentMapping.AddFieldMappingsAt("body", languageMapping)
+						documentMapping.AddFieldMappingsAt("description", languageMapping)
+
+							keywordMapping := bleve.NewTextFieldMapping()
+							keywordMapping.Analyzer = "keyword"
+
+							documentMapping.AddFieldMappingsAt("category", keywordMapping)
+							documentMapping.AddFieldMappingsAt("tags", keywordMapping)
+					*/
+
 					mapping := bleve.NewIndexMapping()
+					// mapping.DefaultMapping = documentMapping
+
 					Index[t][l.String()], err = bleve.NewMemOnly(mapping)
 					if err != nil {
 						return err

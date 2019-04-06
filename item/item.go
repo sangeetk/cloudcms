@@ -44,12 +44,16 @@ type Header struct {
 // Field represent a single field of content type
 type Field struct {
 	Name       string      `json:"name"`
+	Heading    string      `json:"heading"`
 	Widget     string      `json:"widget"`
 	Helptext   string      `json:"helptext"`
 	Value      interface{} `json:"value"`
 	Editable   bool        `json:"editable"`
 	UseForSlug bool        `json:"useforslug"`
 	FileType   string      `json:"filetype"`
+	HasLabel   bool        `json:"has_label"`
+	SkipHeader bool        `json:"skip_header"`
+	SkipFooter bool        `json:"skip_footer"`
 }
 
 // Languages keep mapping between Types & Languages

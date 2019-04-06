@@ -21,18 +21,13 @@ func Languages(languages []language.Tag) {
 }
 
 // Run method should be called from main function
-func Run() {
+func Run(port int) {
 	// Parse command line parameters
 	var host, dbFile, syncFile string
-	var port int
-
-	log.SetFlags(log.Lshortfile)
 
 	flag.StringVar(&host, "host", "localhost", "The local hostname/IP address")
-	flag.IntVar(&port, "port", 8080, "The local port number")
 	flag.StringVar(&dbFile, "dbFile", "db/cloudcms.db", "The database filename")
 	flag.StringVar(&syncFile, "syncFile", "db/cloudcms.sync", "The workers database filename")
-
 	flag.Parse()
 
 	// Internal Host/Port for this service
