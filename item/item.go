@@ -49,6 +49,7 @@ type Field struct {
 	Helptext   string      `json:"helptext"`
 	Value      interface{} `json:"value"`
 	Editable   bool        `json:"editable"`
+	UseAsSlug  bool        `json:"useasslug"`
 	UseForSlug bool        `json:"useforslug"`
 	FileType   string      `json:"filetype"`
 	HasLabel   bool        `json:"has_label"`

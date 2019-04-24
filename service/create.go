@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -80,8 +81,15 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 		var item = (req.Content).(map[string]interface{})
 		item["language"] = req.Language
 		item["id"] = nextSeq
-		slug := stringToSlug(req.Slug)
-		item["slug"] = slug
+
+		if req.Slug != "" {
+			item["slug"] = req.Slug
+		} else if req.SlugText != "" {
+			item["slug"] = stringToSlug(req.SlugText)
+		} else {
+			return errors.New("Empty Key")
+		}
+
 		item["created_at"] = time.Now().Unix()
 		item["updated_at"] = time.Now().Unix()
 		item["deleted_at"] = time.Date(1, 1, 1, 0, 0, 0, 0, time.UTC).Unix()
@@ -133,14 +141,18 @@ func (s *Service) Create(ctx context.Context, req *api.CreateRequest, sync bool)
 			item["status"] = ""
 		}
 
+		// Find new slug only if SlugText is provided
+		slug := item["slug"].(string)
 		newSlug := slug
-		var i int
-		// Find a unique slug
-		for i = 2; bb.Get([]byte(newSlug)) != nil; i++ {
-			newSlug = fmt.Sprintf("%s-%d", slug, i)
-		}
-		if i > 2 {
-			item["slug"] = newSlug
+		if req.Slug == "" && req.SlugText != "" {
+			var i int
+			// Find a unique slug
+			for i = 2; bb.Get([]byte(newSlug)) != nil; i++ {
+				newSlug = fmt.Sprintf("%s-%d", slug, i)
+			}
+			if i > 2 {
+				item["slug"] = newSlug
+			}
 		}
 
 		j, err := json.Marshal(item)

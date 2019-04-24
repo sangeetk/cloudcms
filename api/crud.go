@@ -25,6 +25,7 @@ type CreateRequest struct {
 	Type     string      `json:"type"`
 	Language string      `json:"language"`
 	Slug     string      `json:"slug"`
+	SlugText string      `json:"slug_text"`
 	Content  interface{} `json:"content"`
 }
 
@@ -59,7 +60,7 @@ type Response struct {
 }
 
 // Create - creates a new item
-func Create(contentType, language, slug string, content interface{}, dns string) (interface{}, error) {
+func Create(contentType, language, slug, slugtext string, content interface{}, dns string) (interface{}, error) {
 	ctx := context.Background()
 	tgt, err := url.Parse("http://" + dns + "/create")
 	if err != nil {
@@ -67,7 +68,7 @@ func Create(contentType, language, slug string, content interface{}, dns string)
 	}
 
 	endPoint := ht.NewClient("POST", tgt, encodeRequest, decodeResponse).Endpoint()
-	req := CreateRequest{Type: contentType, Language: language, Slug: slug, Content: content}
+	req := CreateRequest{Type: contentType, Language: language, Slug: slug, SlugText: slugtext, Content: content}
 	resp, err := endPoint(ctx, req)
 	if err != nil {
 		return nil, err
