@@ -7,6 +7,10 @@ import (
 const (
 	// WidgetInput is input field
 	WidgetInput = "input"
+	// WidgetNumber is numeric input field
+	WidgetNumber = "number"
+	// WidgetBool is boolean input field
+	WidgetBool = "bool"
 	// WidgetDate is date field
 	WidgetDate = "date"
 	// WidgetFile is file field
