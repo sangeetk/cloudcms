@@ -13,6 +13,8 @@ const (
 	WidgetBool = "bool"
 	// WidgetDate is date field
 	WidgetDate = "date"
+	// WidgetDateTime is date and time field
+	WidgetDateTime = "datetime"
 	// WidgetFile is file field
 	WidgetFile = "file"
 	// WidgetTextarea is textarea field
