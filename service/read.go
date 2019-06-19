@@ -21,18 +21,21 @@ func (s *Service) Read(ctx context.Context, req *api.ReadRequest) (*api.Response
 		return &resp, nil
 	}
 
-	// First read from index
-	r, err := s.ReadFromIndex(ctx, req)
-	if err == nil && r.Err == "" {
-		return r, nil
-	}
-	////////////////////////////////////////
-	resp.Err = r.Err
-	return &resp, nil
-	////////////////////////////////////////
+	/*
+		// First read from index
+		r, err := s.ReadFromIndex(ctx, req)
+		if err == nil && r.Err == "" {
+			return r, nil
+		}
+		////////////////////////////////////////
+		resp.Err = r.Err
+		return &resp, nil
+		////////////////////////////////////////
+	*/
 
 	// Open database in read-only mode
 	// It will be created if it doesn't exist.
+	var err error
 	options := bolt.Options{ReadOnly: true}
 	db, err = bolt.Open(DBFile, 0644, &options)
 	if err != nil {
