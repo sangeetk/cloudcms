@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	ht "github.com/urantiatech/kit/transport/http"
+	ht "github.com/go-kit/kit/transport/http"
 )
 
 // NumericRange

@@ -10,8 +10,8 @@ import (
 
 	s "git.urantiatech.com/cloudcms/cloudcms/service"
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
+	h "github.com/go-kit/kit/transport/http"
 	"github.com/gorilla/mux"
-	h "github.com/urantiatech/kit/transport/http"
 	"golang.org/x/text/language"
 )
 

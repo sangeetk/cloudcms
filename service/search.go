@@ -8,7 +8,7 @@ import (
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"github.com/blevesearch/bleve"
 	q "github.com/blevesearch/bleve/search/query"
-	"github.com/urantiatech/kit/endpoint"
+	"github.com/go-kit/kit/endpoint"
 )
 
 // Search - searches for query

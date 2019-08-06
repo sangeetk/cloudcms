@@ -19,7 +19,7 @@ import (
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/blevesearch/bleve"
 	"github.com/boltdb/bolt"
-	"github.com/urantiatech/kit/endpoint"
+	"github.com/go-kit/kit/endpoint"
 	"golang.org/x/text/language"
 )
 

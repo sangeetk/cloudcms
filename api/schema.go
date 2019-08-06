@@ -7,7 +7,7 @@ import (
 	"net/url"
 
 	"git.urantiatech.com/cloudcms/cloudcms/item"
-	ht "github.com/urantiatech/kit/transport/http"
+	ht "github.com/go-kit/kit/transport/http"
 )
 
 // SchemaRequest - schema request

@@ -11,7 +11,7 @@ import (
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"git.urantiatech.com/cloudcms/cloudcms/worker"
 	"github.com/boltdb/bolt"
-	"github.com/urantiatech/kit/endpoint"
+	"github.com/go-kit/kit/endpoint"
 )
 
 // Delete - creates a single item

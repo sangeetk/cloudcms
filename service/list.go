@@ -7,7 +7,7 @@ import (
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"github.com/blevesearch/bleve"
-	"github.com/urantiatech/kit/endpoint"
+	"github.com/go-kit/kit/endpoint"
 )
 
 // List - list all items

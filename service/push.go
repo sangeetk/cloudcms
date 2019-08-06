@@ -8,7 +8,7 @@ import (
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"github.com/boltdb/bolt"
-	"github.com/urantiatech/kit/endpoint"
+	"github.com/go-kit/kit/endpoint"
 )
 
 // Push request

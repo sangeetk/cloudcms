@@ -12,7 +12,7 @@ import (
 	"github.com/blevesearch/bleve"
 	"github.com/blevesearch/bleve/search"
 	q "github.com/blevesearch/bleve/search/query"
-	"github.com/urantiatech/kit/endpoint"
+	"github.com/go-kit/kit/endpoint"
 )
 
 // FacetsSearch - searches for query with multiple facets

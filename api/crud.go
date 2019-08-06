@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/url"
 
-	ht "github.com/urantiatech/kit/transport/http"
+	ht "github.com/go-kit/kit/transport/http"
 )
 
 const (

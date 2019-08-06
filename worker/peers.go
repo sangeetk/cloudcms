@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"github.com/boltdb/bolt"
-	ht "github.com/urantiatech/kit/transport/http"
+	ht "github.com/go-kit/kit/transport/http"
 )
 
 // SyncPeers syncs all other peers within the same cluster

@@ -7,7 +7,7 @@ import (
 
 	"git.urantiatech.com/cloudcms/cloudcms/api"
 	"git.urantiatech.com/cloudcms/cloudcms/item"
-	"github.com/urantiatech/kit/endpoint"
+	"github.com/go-kit/kit/endpoint"
 )
 
 // Schema - explains the schema
