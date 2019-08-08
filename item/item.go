@@ -23,6 +23,8 @@ const (
 	WidgetRichtext = "richtext"
 	// WidgetTags is tags field
 	WidgetTags = "tags"
+	// WidgetList is tags field
+	WidgetList = "list"
 
 /*
 	// WidgetCheckbox is checkbox field
