@@ -1,6 +1,9 @@
 package item
 
 import (
+	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/analysis/analyzer/keyword"
+	"github.com/blevesearch/bleve/mapping"
 	"golang.org/x/text/language"
 )
 
@@ -92,6 +95,18 @@ func init() {
 	Languages = make(map[string]language.Tag)
 	Types = make(map[string]func() interface{})
 	Fields = make(map[string][]Field)
+}
+
+var ContentMapping *mapping.DocumentMapping
+
+func SetKeywordMapping(keys ...string) {
+	keywordMapping := bleve.NewTextFieldMapping()
+	keywordMapping.Analyzer = keyword.Name
+
+	ContentMapping = bleve.NewDocumentMapping()
+	for _, key := range keys {
+		ContentMapping.AddFieldMappingsAt(key, keywordMapping)
+	}
 }
 
 // IndexContent enables Searching
